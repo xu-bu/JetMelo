@@ -302,6 +302,8 @@ fun SearchScreen(
                             }
                         }
                     }
+
+                    else -> Unit
                 }
 
                 item {
