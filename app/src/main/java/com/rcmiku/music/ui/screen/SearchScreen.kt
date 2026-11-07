@@ -13,10 +13,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,6 +32,8 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +46,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -47,6 +56,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -84,7 +94,6 @@ fun SearchScreen(
 ) {
 
     var searchValue by rememberSaveable { mutableStateOf("") }
-    var expanded by rememberSaveable { mutableStateOf(false) }
     val searchType by searchViewModel.searchType.collectAsState()
     val searchResults = searchViewModel.searchResults.collectAsLazyPagingItems()
     val mediaController = LocalPlayerController.current.controller
@@ -107,91 +116,98 @@ fun SearchScreen(
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
     var selectSong by remember { mutableStateOf<Song?>(null) }
 
-    Box(
+    var focused by remember { mutableStateOf(false) }
+
+    val submitSearch: (String) -> Unit = { query ->
+        if (query.isNotBlank()) {
+            searchValue = query
+            searchViewModel.updateSearchValue(query)
+            focusManager.clearFocus()
+            keyboardController?.hide()
+        }
+    }
+
+    Column(
         Modifier
             .fillMaxSize()
-            .semantics { isTraversalGroup = true }) {
-        SearchBar(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .semantics { traversalIndex = 0f },
-            inputField = {
-                SearchBarDefaults.InputField(
-                    query = searchValue,
-                    onQueryChange = {
-                        searchValue = it
-                        if (it.isNotEmpty())
-                            searchViewModel.fetchSearchKeyword(it)
-                    },
-                    onSearch = {
-                        expanded = false
-                        searchViewModel.updateSearchValue(it)
+            .statusBarsPadding()
+            .semantics { isTraversalGroup = true }
+    ) {
+        TextField(
+            value = searchValue,
+            onValueChange = {
+                searchValue = it
+                if (it.isNotEmpty())
+                    searchViewModel.fetchSearchKeyword(it)
+            },
+            singleLine = true,
+            placeholder = { Text(stringResource(R.string.search)) },
+            leadingIcon = {
+                IconButton(onClick = {
+                    if (focused)
                         focusManager.clearFocus()
-                        keyboardController?.hide()
-                    },
-                    expanded = expanded,
-                    onExpandedChange = {
-                        expanded = it
-                    },
-                    placeholder = { Text(stringResource(R.string.search)) },
-                    leadingIcon = {
-                        IconButton(onClick = {
-                            if (!expanded)
-                                navController.navigateUp()
-                            else
-                                expanded = false
-                        }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                                contentDescription = null
-                            )
-                        }
-                    }
-                )
+                    else
+                        navController.navigateUp()
+                }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = null
+                    )
+                }
             },
-            expanded = expanded,
-            onExpandedChange = {
-                expanded = it
-            },
-            content = {
-                LazyColumn {
-                    suggestKeywordResponseState?.data?.suggests?.let {
-                        items(it) { item ->
-                            SuggestItem(history = false, query = item.keyword, onInsert = {
-                                searchValue = item.keyword
-                                focusManager.clearFocus()
-                            }, onClick = {
-                                searchValue = item.keyword
-                                expanded = false
-                                searchViewModel.updateSearchValue(item.keyword)
-                                focusManager.clearFocus()
-                                keyboardController?.hide()
-                            }, onDelete = {
-
-                            })
-                        }
+            trailingIcon = {
+                if (searchValue.isNotEmpty())
+                    IconButton(onClick = { searchValue = "" }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = null
+                        )
                     }
+            },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { submitSearch(searchValue) }),
+            shape = RoundedCornerShape(28.dp),
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .onFocusChanged { focused = it.isFocused }
+                .semantics { traversalIndex = 0f }
+        )
 
-                    items(searchHistoryState) {
-                        SuggestItem(history = true, query = it, onInsert = {
-                            searchValue = it
-                            focusManager.clearFocus()
+        if (focused) {
+            LazyColumn(Modifier.weight(1f)) {
+                suggestKeywordResponseState?.data?.suggests?.let {
+                    items(it) { item ->
+                        SuggestItem(history = false, query = item.keyword, onInsert = {
+                            searchValue = item.keyword
+                            searchViewModel.fetchSearchKeyword(item.keyword)
                         }, onClick = {
-                            searchValue = it
-                            expanded = false
-                            searchViewModel.updateSearchValue(it)
-                            focusManager.moveFocus(FocusDirection.Right)
-                            keyboardController?.hide()
+                            submitSearch(item.keyword)
                         }, onDelete = {
-                            searchViewModel.deleteSearchQuery(it)
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+
                         })
                     }
                 }
-            }
-        )
 
-        Column(Modifier.padding(top = 100.dp)) {
+                items(searchHistoryState) {
+                    SuggestItem(history = true, query = it, onInsert = {
+                        searchValue = it
+                        searchViewModel.fetchSearchKeyword(it)
+                    }, onClick = {
+                        submitSearch(it)
+                    }, onDelete = {
+                        searchViewModel.deleteSearchQuery(it)
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    })
+                }
+            }
+        } else {
+        Column {
             SecondaryTabRow(
                 selectedTabIndex = state,
                 indicator = {
@@ -310,6 +326,7 @@ fun SearchScreen(
                     Spacer(Modifier.navigationBarsPadding())
                 }
             }
+        }
         }
     }
 
