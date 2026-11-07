@@ -69,6 +69,9 @@ import com.rcmiku.music.data.favoriteSongIdsDatastore
 import com.rcmiku.music.ui.icons.Album
 import com.rcmiku.music.ui.icons.Artist
 import com.rcmiku.music.ui.icons.ChevronDown
+import com.rcmiku.music.R
+import androidx.compose.ui.res.stringResource
+import com.rcmiku.music.ui.icons.Comment
 import com.rcmiku.music.ui.icons.Favorite
 import com.rcmiku.music.ui.icons.FavoriteFill
 import com.rcmiku.music.ui.icons.PauseFill
@@ -126,6 +129,7 @@ fun Player(
     var currentSong by remember { mutableStateOf<Song?>(null) }
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
     var openPlayerBottomSheet by rememberSaveable { mutableStateOf(false) }
+    var openCommentSheet by rememberSaveable { mutableStateOf(false) }
     val shuffleMode = playerState?.shuffleModeEnabled == true
 
     LaunchedEffect(mediaId) {
@@ -238,6 +242,9 @@ fun Player(
                                     if (songIds.contains(mediaId?.toLong())) FavoriteFill else Favorite,
                                     contentDescription = null
                                 )
+                            }
+                            FilledIconButton(onClick = { openCommentSheet = true }) {
+                                Icon(imageVector = Comment, contentDescription = stringResource(R.string.comments))
                             }
                             FilledIconButton(onClick = { openPlayerBottomSheet = true }) {
                                 Icon(imageVector = Icons.Outlined.MoreVert, contentDescription = null)
@@ -423,6 +430,12 @@ fun Player(
                     onBackPressed()
                 })
         }
+
+        CommentBottomSheet(
+            songId = mediaId?.toLongOrNull(),
+            openBottomSheet = openCommentSheet,
+            onDismiss = { openCommentSheet = false }
+        )
 
         PlayerMenuBottomSheet(
             currentSong = currentSong,

@@ -86,4 +86,9 @@
     <string name="collected">已收藏</string>
     <string name="remove_from_songList">从歌单移除</string>
     <string name="no_brief">暂无简介</string>
+    <string name="comments">评论</string>
+    <string name="hot_comments">热门评论</string>
+    <string name="latest_comments">最新评论</string>
+    <string name="no_comments">暂无评论</string>
+    <string name="load_failed_retry">加载失败，点击重试</string>
 </resources>
