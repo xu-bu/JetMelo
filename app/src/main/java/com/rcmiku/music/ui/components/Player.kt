@@ -86,6 +86,7 @@ import com.rcmiku.music.ui.icons.SkipNextFill
 import com.rcmiku.music.ui.icons.SkipPreviousFill
 import com.rcmiku.music.ui.navigation.AlbumNav
 import com.rcmiku.music.ui.navigation.ArtistNav
+import com.rcmiku.music.ui.navigation.CommentNav
 import com.rcmiku.music.utils.getItemShape
 import com.rcmiku.music.utils.makeTimeString
 import com.rcmiku.ncmapi.api.comment.CommentApi
@@ -134,7 +135,6 @@ fun Player(
     var currentSong by remember { mutableStateOf<Song?>(null) }
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
     var openPlayerBottomSheet by rememberSaveable { mutableStateOf(false) }
-    var openCommentSheet by rememberSaveable { mutableStateOf(false) }
     var commentCount by remember { mutableStateOf(0) }
     val shuffleMode = playerState?.shuffleModeEnabled == true
 
@@ -284,7 +284,12 @@ fun Player(
                             CommentButton(
                                 count = commentCount,
                                 filled = true,
-                                onClick = { openCommentSheet = true }
+                                onClick = {
+                                    mediaId?.toLongOrNull()?.let {
+                                        navController.navigate(CommentNav(resourceId = it))
+                                        onBackPressed()
+                                    }
+                                }
                             )
                             FilledIconButton(onClick = { openPlayerBottomSheet = true }) {
                                 Icon(imageVector = Icons.Outlined.MoreVert, contentDescription = null)
@@ -486,12 +491,6 @@ fun Player(
                     onBackPressed()
                 })
         }
-
-        CommentBottomSheet(
-            resourceId = mediaId?.toLongOrNull(),
-            openBottomSheet = openCommentSheet,
-            onDismiss = { openCommentSheet = false }
-        )
 
         PlayerMenuBottomSheet(
             currentSong = currentSong,

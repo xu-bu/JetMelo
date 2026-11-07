@@ -20,6 +20,7 @@ import com.rcmiku.music.ui.screen.ExploreScreen
 import com.rcmiku.music.ui.screen.HomeScreen
 import com.rcmiku.music.ui.screen.LibraryScreen
 import com.rcmiku.music.ui.screen.ListScreen
+import com.rcmiku.music.ui.screen.CommentScreen
 import com.rcmiku.music.ui.screen.FollowedArtistsScreen
 import com.rcmiku.music.ui.screen.LoginScreen
 import com.rcmiku.music.ui.screen.PlaylistScreen
@@ -101,6 +102,7 @@ fun NavGraph(
                     animatedContentScope = this@composable
                 )
             }
+            composable<CommentNav> { CommentScreen(navController = navController) }
             composable<RecordNav> {
                 RecordScreen(navController = navController)
             }

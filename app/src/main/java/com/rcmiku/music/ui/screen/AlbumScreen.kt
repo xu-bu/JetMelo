@@ -68,12 +68,12 @@ import com.rcmiku.music.extensions.playMediaAtId
 import com.rcmiku.music.extensions.setPlaylist
 import com.rcmiku.music.ui.components.SongListItem
 import com.rcmiku.music.ui.components.CommentButton
-import com.rcmiku.music.ui.components.CommentBottomSheet
 import com.rcmiku.music.ui.components.SongMenuBottomSheet
 import com.rcmiku.music.ui.icons.LibraryAdd
 import com.rcmiku.music.ui.icons.LibraryAddCheck
 import com.rcmiku.music.ui.icons.Comment
 import com.rcmiku.music.ui.navigation.ArtistNav
+import com.rcmiku.music.ui.navigation.CommentNav
 import com.rcmiku.music.utils.formatTimestamp
 import com.rcmiku.music.viewModel.AlbumScreenViewModel
 import com.rcmiku.ncmapi.api.comment.CommentApi
@@ -98,7 +98,6 @@ fun AlbumScreen(
     val currentMediaId = playerState?.currentMediaItem?.mediaId?.toLongOrNull()
     val albumInfoState by albumScreenViewModel.albumInfo.collectAsState()
     var commentCount by remember { mutableStateOf(0) }
-    var openCommentSheet by rememberSaveable { mutableStateOf(false) }
     val albumId = albumDetailState?.getOrNull()?.album?.id
     LaunchedEffect(albumId) {
         commentCount = 0
@@ -244,7 +243,11 @@ fun AlbumScreen(
                             CommentButton(
                                 count = commentCount,
                                 filled = false,
-                                onClick = { openCommentSheet = true }
+                                onClick = {
+                                    albumId?.let {
+                                        navController.navigate(CommentNav(resourceId = it, isAlbum = true))
+                                    }
+                                }
                             )
                         }
                     }
@@ -275,13 +278,6 @@ fun AlbumScreen(
             }
         }
     }
-
-    CommentBottomSheet(
-        resourceId = albumId,
-        isAlbum = true,
-        openBottomSheet = openCommentSheet,
-        onDismiss = { openCommentSheet = false }
-    )
 
     SongMenuBottomSheet(
         navController = navController,

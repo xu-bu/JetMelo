@@ -30,6 +30,9 @@ data class ArtistNav(val artistId: Long)
 data class AlbumNav(val albumId: Long)
 
 @Serializable
+data class CommentNav(val resourceId: Long, val isAlbum: Boolean = false)
+
+@Serializable
 data class RadioNav(val radioId: Long)
 
 @Serializable
