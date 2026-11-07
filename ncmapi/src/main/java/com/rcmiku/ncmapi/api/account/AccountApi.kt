@@ -129,6 +129,9 @@ object AccountApi {
     suspend fun cloudSong(offset: Int, limit: Int): Result<CloudSongResponse> =
         apiGet("/user/cloud", mapOf("offset" to offset, "limit" to limit))
 
+    suspend fun artistSublist(offset: Int, limit: Int): Result<ArtistSublistResponse> =
+        apiGet("/artist/sublist", mapOf("limit" to limit, "offset" to offset))
+
     suspend fun albumSublist(offset: Int, limit: Int): Result<AlbumSublistResponse> =
         apiGet("/album/sublist", mapOf("offset" to offset, "limit" to limit))
 

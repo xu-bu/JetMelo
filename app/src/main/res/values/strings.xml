@@ -94,4 +94,9 @@
     <string name="follow">关注</string>
     <string name="following">已关注</string>
     <string name="followed_days">已关注 %d 天</string>
+    <string name="followed_artists">关注的歌手</string>
+    <string name="no_followed_artists">还没有关注的歌手</string>
+    <string name="new_releases">最新推送</string>
+    <string name="new_releases_empty">暂无没听过的新专辑</string>
+    <string name="new_releases_scanning">正在扫描关注歌手的新专辑…</string>
 </resources>

@@ -10,6 +10,7 @@ sealed class Screen(val route: String) {
     data object TopList : Screen("topList")
     data object AlbumSublist : Screen("albumSublist")
     data object Login : Screen("login")
+    data object FollowedArtists : Screen("followedArtists")
     data object Search : Screen("search")
 }
 

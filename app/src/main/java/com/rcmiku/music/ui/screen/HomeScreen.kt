@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,6 +59,8 @@ import com.rcmiku.music.extensions.playMediaAtId
 import com.rcmiku.music.extensions.setPlaylist
 import com.rcmiku.music.ui.components.GridThumbnailImage
 import com.rcmiku.music.ui.components.NavigationTitle
+import com.rcmiku.music.ui.components.NewAlbumTimeline
+import com.rcmiku.music.ui.navigation.AlbumNav
 import com.rcmiku.music.ui.components.PlaylistGridItem
 import com.rcmiku.music.ui.components.SongListItem
 import com.rcmiku.music.ui.components.SongMenuBottomSheet
@@ -79,9 +82,10 @@ fun HomeScreen(
     animatedContentScope: AnimatedContentScope
 ) {
     val recommendSongsState by homeScreenViewModel.recommendSongs.collectAsState()
+    val newAlbums by homeScreenViewModel.newAlbums.collectAsState()
+    val feedScanning by homeScreenViewModel.feedScanning.collectAsState()
     val recommendPlaylistState by homeScreenViewModel.recommendPlaylist.collectAsState()
     val personalizedPlaylistState by homeScreenViewModel.personalizedPlaylist.collectAsState()
-    val gridState = rememberLazyGridState()
     val mediaController = LocalPlayerController.current.controller
     val playerState = LocalPlayerState.current
     val ncmCookie by rememberPreference(ncmCookieKey, "")
@@ -127,7 +131,8 @@ fun HomeScreen(
                     )
                 }
             ) {
-                LazyColumn {
+                Row(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.weight(1f)) {
                     recommendSongsState?.onSuccess { response ->
                         val songs = response.data.dailySongs
                         item {
@@ -163,6 +168,13 @@ fun HomeScreen(
                             )
                         }
                     }
+                }
+                NewAlbumTimeline(
+                    albums = newAlbums,
+                    scanning = feedScanning,
+                    onAlbumClick = { navController.navigate(AlbumNav(albumId = it.id)) },
+                    modifier = Modifier.weight(1f)
+                )
                 }
             }
         }

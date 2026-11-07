@@ -401,6 +401,12 @@ data class AlbumSublistResponse(
 )
 
 @Serializable
+data class ArtistSublistResponse(
+    val data: List<SearchArtist> = emptyList(),
+    @SerialName("hasMore") val hasMore: Boolean = false
+)
+
+@Serializable
 data class SongRecordResponse(
     @SerialName("weekData") val weekData: List<RecordSong> = emptyList(),
     @SerialName("allData") val allData: List<RecordSong> = emptyList()

@@ -6,6 +6,8 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -69,7 +71,7 @@ import com.rcmiku.music.viewModel.AlbumScreenViewModel
 import com.rcmiku.ncmapi.model.Song
 import kotlinx.coroutines.flow.map
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun AlbumScreen(
     navController: NavHostController,
@@ -150,19 +152,28 @@ fun AlbumScreen(
                             maxLines = 2,
                             modifier = Modifier.padding(horizontal = 10.dp)
                         )
-                        Text(
-                            text = it.album.artist.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.secondary,
-                            textAlign = TextAlign.Center,
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 2,
-                            modifier = Modifier
-                                .clickable {
-                                    navController.navigate(ArtistNav(artistId = it.album.artist.id))
-                                }
-                                .padding(horizontal = 10.dp)
-                        )
+                        val albumArtists = it.album.artists.ifEmpty { listOf(it.album.artist) }
+                        FlowRow(
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(horizontal = 10.dp)
+                        ) {
+                            albumArtists.forEachIndexed { index, artist ->
+                                Text(
+                                    text = artist.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.clickable {
+                                        navController.navigate(ArtistNav(artistId = artist.id))
+                                    }
+                                )
+                                if (index < albumArtists.lastIndex)
+                                    Text(
+                                        text = " / ",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                            }
+                        }
                         Spacer(Modifier.height(6.dp))
                         Text(
                             text = formatTimestamp(it.album.publishTime),

@@ -17,6 +17,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -41,6 +42,7 @@ import com.rcmiku.music.constants.ncmCookieKey
 import com.rcmiku.music.constants.userIdKye
 import com.rcmiku.music.ui.components.tabs
 import com.rcmiku.music.ui.navigation.NavGraph
+import com.rcmiku.music.utils.AlbumFeed
 import com.rcmiku.music.utils.rememberPreference
 import com.rcmiku.ncmapi.api.account.AccountApi
 import com.rcmiku.ncmapi.utils.CookieProvider
@@ -87,6 +89,7 @@ fun MainScreen() {
     }
 
     var showPlayer by remember { mutableStateOf(false) }
+    val appContext = LocalContext.current.applicationContext
 
     LaunchedEffect(ncmCookie) {
         if (ncmCookie.isNotEmpty()) {
@@ -94,6 +97,10 @@ fun MainScreen() {
             AccountApi.account().getOrNull()?.profile?.userId?.let {
                 userId = it
             }
+            // Refresh the "latest releases" feed in the background (at most once every 24 hours).
+            AlbumFeed.scanIfDue(appContext)
+        } else {
+            AlbumFeed.clear(appContext)
         }
     }
 

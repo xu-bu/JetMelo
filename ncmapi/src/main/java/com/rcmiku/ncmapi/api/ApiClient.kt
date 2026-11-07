@@ -56,6 +56,7 @@ private fun route(path: String, p: Map<String, Any>): Route {
         "/artist/detail" -> eapi("/api/artist/head/info/get", mapOf("id" to required("id")))
         "/artist/detail/dynamic" -> eapi("/api/artist/detail/dynamic", mapOf("id" to required("id")))
         "/artist/sub" -> weapi("/api/artist/${if (p["t"].toString() == "1") "sub" else "unsub"}", mapOf("artistId" to required("id"), "artistIds" to "[${required("id")}]"))
+        "/artist/sublist" -> weapi("/api/artist/sublist", mapOf("limit" to (p["limit"] ?: 25), "offset" to (p["offset"] ?: 0), "total" to true))
         "/artist/top/song" -> weapi("/api/artist/top/song", mapOf("id" to required("id")))
         "/cloudsearch" -> eapi("/api/cloudsearch/pc", mapOf("s" to required("keywords"), "type" to (p["type"] ?: 1), "limit" to (p["limit"] ?: 30), "offset" to (p["offset"] ?: 0), "total" to true))
         "/dj/detail" -> weapi("/api/djradio/v2/get", mapOf("id" to required("rid")))
