@@ -28,6 +28,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import java.util.PriorityQueue
 
 /** One unheard album of a followed artist, as stored in the local feed. */
 @Serializable
@@ -49,7 +50,8 @@ data class FeedAlbum(
  */
 object AlbumFeed {
     private const val SCAN_INTERVAL_MS = 24L * 60 * 60 * 1000
-    private const val PAGE_SIZE = 30
+    private const val PAGE_SIZE = 20
+    private const val FEED_SIZE = 20
     private const val MAX_ALBUMS_PER_ARTIST = 300
     private const val PARALLEL_ARTISTS = 3
 
@@ -108,13 +110,14 @@ object AlbumFeed {
         val collected = loadCollectedAlbumIds() ?: return
         val previous = decode(context.dataStore.data.first()[newAlbumFeedKey])
 
+        val newest = NewestTimes(FEED_SIZE)
         val semaphore = Semaphore(PARALLEL_ARTISTS)
         val failedArtists = mutableSetOf<Long>()
         val found = coroutineScope {
             artists.map { artist ->
                 async {
                     semaphore.withPermit {
-                        scanArtist(artist, collected) ?: run {
+                        scanArtist(artist, collected, newest) ?: run {
                             synchronized(failedArtists) { failedArtists.add(artist.id) }
                             emptyList()
                         }
@@ -127,6 +130,7 @@ object AlbumFeed {
         val merged = (found + previous.filter { it.artistId in failedArtists })
             .distinctBy { it.id }
             .sortedByDescending { it.publishTime }
+            .take(FEED_SIZE)
 
         context.dataStore.edit { prefs ->
             prefs[newAlbumFeedKey] = json.encodeToString(listSerializer, merged)
@@ -135,14 +139,23 @@ object AlbumFeed {
         }
     }
 
-    /** Albums of [artist] newer than the first collected one; null if a request failed. */
-    private suspend fun scanArtist(artist: SearchArtist, collected: Set<Long>): List<FeedAlbum>? {
+    /**
+     * Albums of [artist] newer than the first collected one; null if a request failed.
+     * Stops early once an album is not newer than the [FEED_SIZE]-th newest album found so far
+     * (it, and everything older, cannot make it into the feed).
+     */
+    private suspend fun scanArtist(
+        artist: SearchArtist,
+        collected: Set<Long>,
+        newest: NewestTimes
+    ): List<FeedAlbum>? {
         val result = mutableListOf<FeedAlbum>()
         var offset = 0
         while (offset < MAX_ALBUMS_PER_ARTIST) {
             val page = ArtistApi.artistAlbum(artist.id, PAGE_SIZE, offset).getOrNull() ?: return null
             for (album in page.hotAlbums.sortedByDescending { it.publishTime }) {
                 if (album.id in collected) return result
+                if (!newest.offer(album.publishTime)) return result
                 result.add(album.toFeedAlbum(artist))
             }
             if (!page.more || page.hotAlbums.isEmpty()) break
@@ -150,6 +163,20 @@ object AlbumFeed {
             delay(100)
         }
         return result
+    }
+
+    /** Thread-safe record of the [size] newest publish times seen so far. */
+    private class NewestTimes(private val size: Int) {
+        private val times = PriorityQueue<Long>()
+
+        /** Returns false if [time] can no longer be among the newest [size]; otherwise records it. */
+        @Synchronized
+        fun offer(time: Long): Boolean {
+            if (times.size >= size && time <= times.peek()!!) return false
+            times.add(time)
+            if (times.size > size) times.poll()
+            return true
+        }
     }
 
     private suspend fun loadFollowedArtists(): List<SearchArtist>? {

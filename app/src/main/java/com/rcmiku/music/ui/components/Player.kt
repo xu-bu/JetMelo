@@ -2,6 +2,7 @@ package com.rcmiku.music.ui.components
 
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -32,6 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -52,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -242,16 +245,39 @@ fun Player(
                                     )
                                 }
                             }
+                            val liked = songIds.contains(mediaId?.toLongOrNull())
+                            val likedContainer by animateColorAsState(
+                                if (liked) MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                            val likedContent by animateColorAsState(
+                                if (liked) MaterialTheme.colorScheme.onError
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            val haloColor = MaterialTheme.colorScheme.errorContainer
+                            val haloRadius = 3.dp
                             FilledIconButton(
                                 onClick = {
                                     mediaController?.sendCustomCommand(
                                         MediaSessionConstants.CommandToggleLike,
                                         Bundle.EMPTY
                                     )
+                                },
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = likedContainer,
+                                    contentColor = likedContent
+                                ),
+                                modifier = Modifier.drawBehind {
+                                    if (liked) {
+                                        drawCircle(
+                                            color = haloColor,
+                                            radius = size.minDimension / 2 + haloRadius.toPx()
+                                        )
+                                    }
                                 }
                             ) {
                                 Icon(
-                                    if (songIds.contains(mediaId?.toLong())) FavoriteFill else Favorite,
+                                    if (liked) FavoriteFill else Favorite,
                                     contentDescription = null
                                 )
                             }
