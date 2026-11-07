@@ -102,4 +102,8 @@
     <string name="new_releases_rescan">重新扫描</string>
     <string name="new_releases_last_scan">上次扫描：%s</string>
     <string name="new_releases_never_scanned">尚未扫描</string>
+    <string name="album_collected">已收藏专辑</string>
+    <string name="album_collect_failed">收藏失败，请重试</string>
+    <string name="favorites_search_hint">搜索曲名或歌手</string>
+    <string name="no_search_result">没有找到匹配的歌曲</string>
 </resources>

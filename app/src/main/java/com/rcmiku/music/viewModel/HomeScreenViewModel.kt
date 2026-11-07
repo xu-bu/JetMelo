@@ -1,12 +1,15 @@
 package com.rcmiku.music.viewModel
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rcmiku.music.R
 import com.rcmiku.music.utils.AlbumFeed
 import com.rcmiku.music.utils.FavoriteSongIdsUtil
 import com.rcmiku.music.utils.FeedAlbum
 import com.rcmiku.ncmapi.api.account.AccountApi
+import com.rcmiku.ncmapi.api.album.AlbumApi
 import com.rcmiku.ncmapi.api.recommend.RecommendApi
 import com.rcmiku.ncmapi.model.DailySongsResponse
 import com.rcmiku.ncmapi.model.PersonalizedPlaylistResponse
@@ -43,6 +46,19 @@ class HomeScreenViewModel @Inject constructor(@ApplicationContext private val co
     val feedScanning: StateFlow<Boolean> = AlbumFeed.scanning
     val feedLastScan: StateFlow<Long> = AlbumFeed.lastScan(context)
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+
+    fun collectFeedAlbum(album: FeedAlbum) {
+        viewModelScope.launch {
+            AlbumApi.albumSub(id = album.id, isSub = true)
+                .onSuccess {
+                    AlbumFeed.remove(context, album.id)
+                    Toast.makeText(context, R.string.album_collected, Toast.LENGTH_SHORT).show()
+                }
+                .onFailure {
+                    Toast.makeText(context, R.string.album_collect_failed, Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
 
     fun rescanFeed() {
         AlbumFeed.scanNow(context)

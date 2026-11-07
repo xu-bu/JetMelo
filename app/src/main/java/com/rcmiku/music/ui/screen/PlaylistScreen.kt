@@ -14,8 +14,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.PlayArrow
@@ -28,6 +37,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -84,6 +95,9 @@ fun PlaylistScreen(
     val playlistInfoState by playlistScreenViewModel.playlistInfo.collectAsState()
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
     var selectSong by remember { mutableStateOf<Song?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     val songIds by context.favoriteSongIdsDatastore.data.map { it.songIdsList }
         .collectAsState(emptyList())
@@ -113,6 +127,15 @@ fun PlaylistScreen(
             }
         ) { padding ->
             playlistDetailState?.let {
+                val tracks = it.playlist.tracks
+                val visibleTracks = remember(tracks, searchQuery) {
+                    val query = searchQuery.trim()
+                    if (query.isEmpty()) tracks
+                    else tracks.filter { song ->
+                        song.name.contains(query, ignoreCase = true) ||
+                                song.ar.any { artist -> artist.name.contains(query, ignoreCase = true) }
+                    }
+                }
                 LazyColumn(
                     contentPadding = padding, state = listState,
                 ) {
@@ -170,26 +193,28 @@ fun PlaylistScreen(
 
                             Spacer(Modifier.height(6.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                OutlinedButton(
-                                    onClick = {
-                                        playlistInfoState?.subscribed?.let {
-                                            playlistScreenViewModel.playlistSub(isSub = !it)
-                                        }
-                                    },
-                                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(
-                                        imageVector = if (playlistInfoState?.subscribed == true) LibraryAddCheck else LibraryAdd,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(ButtonDefaults.IconSize)
-                                    )
-                                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                                    Text(
-                                        text = if (playlistInfoState?.subscribed == true) stringResource(
-                                            R.string.library_add_check
-                                        ) else stringResource(R.string.library_add)
-                                    )
+                                if (!playlistScreenViewModel.isFavorites) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            playlistInfoState?.subscribed?.let {
+                                                playlistScreenViewModel.playlistSub(isSub = !it)
+                                            }
+                                        },
+                                        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (playlistInfoState?.subscribed == true) LibraryAddCheck else LibraryAdd,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(ButtonDefaults.IconSize)
+                                        )
+                                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                                        Text(
+                                            text = if (playlistInfoState?.subscribed == true) stringResource(
+                                                R.string.library_add_check
+                                            ) else stringResource(R.string.library_add)
+                                        )
+                                    }
                                 }
                                 Button(
                                     onClick = {
@@ -214,7 +239,54 @@ fun PlaylistScreen(
 
                     }
 
-                    itemsIndexed(it.playlist.tracks) { index, song ->
+                    if (playlistScreenViewModel.isFavorites) {
+                        item {
+                            TextField(
+                                value = searchQuery,
+                                onValueChange = { value -> searchQuery = value },
+                                singleLine = true,
+                                placeholder = { Text(stringResource(R.string.favorites_search_hint)) },
+                                leadingIcon = {
+                                    Icon(imageVector = Icons.Default.Search, contentDescription = null)
+                                },
+                                trailingIcon = {
+                                    if (searchQuery.isNotEmpty())
+                                        IconButton(onClick = { searchQuery = "" }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = null
+                                            )
+                                        }
+                                },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                keyboardActions = KeyboardActions(onSearch = {
+                                    focusManager.clearFocus()
+                                    keyboardController?.hide()
+                                }),
+                                shape = RoundedCornerShape(28.dp),
+                                colors = TextFieldDefaults.colors(
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+                        }
+                        if (searchQuery.isNotBlank() && visibleTracks.isEmpty()) {
+                            item {
+                                Text(
+                                    text = stringResource(R.string.no_search_result),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    itemsIndexed(visibleTracks) { index, song ->
                         SongListItem(
                             song = song,
                             isPlaying = isPlaying,

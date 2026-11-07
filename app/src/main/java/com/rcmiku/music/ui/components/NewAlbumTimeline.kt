@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +52,7 @@ fun NewAlbumTimeline(
     lastScanTime: Long,
     onRescan: () -> Unit,
     onAlbumClick: (FeedAlbum) -> Unit,
+    onMoreClick: (FeedAlbum) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Only the newest MAX_ALBUMS albums are shown.
@@ -114,7 +116,11 @@ fun NewAlbumTimeline(
         grouped.forEach { (month, monthAlbums) ->
             item(key = "month_$month") { TimelineMonthHeader(month) }
             items(monthAlbums, key = { it.id }) { album ->
-                TimelineAlbumRow(album = album, onClick = { onAlbumClick(album) })
+                TimelineAlbumRow(
+                    album = album,
+                    onClick = { onAlbumClick(album) },
+                    onMoreClick = { onMoreClick(album) }
+                )
             }
         }
     }
@@ -164,7 +170,7 @@ private fun TimelineMonthHeader(month: String) {
 }
 
 @Composable
-private fun TimelineAlbumRow(album: FeedAlbum, onClick: () -> Unit) {
+private fun TimelineAlbumRow(album: FeedAlbum, onClick: () -> Unit, onMoreClick: () -> Unit) {
     val dayFormat = remember { SimpleDateFormat("MM-dd", Locale.getDefault()) }
     Row(
         modifier = Modifier
@@ -207,6 +213,13 @@ private fun TimelineAlbumRow(album: FeedAlbum, onClick: () -> Unit) {
                     text = dayFormat.format(Date(album.publishTime)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
+                )
+            }
+            IconButton(onClick = onMoreClick, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.more),
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

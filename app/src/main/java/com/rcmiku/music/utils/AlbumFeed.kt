@@ -94,6 +94,14 @@ object AlbumFeed {
         }
     }
 
+    /** Drops one album from the stored feed, e.g. after the user collected it. */
+    suspend fun remove(context: Context, albumId: Long) {
+        context.applicationContext.dataStore.edit { prefs ->
+            val updated = decode(prefs[newAlbumFeedKey]).filterNot { it.id == albumId }
+            prefs[newAlbumFeedKey] = json.encodeToString(listSerializer, updated)
+        }
+    }
+
     /** Forget the feed, e.g. after logging out. */
     fun clear(context: Context) {
         val appContext = context.applicationContext

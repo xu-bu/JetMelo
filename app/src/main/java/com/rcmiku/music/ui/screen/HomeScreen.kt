@@ -58,14 +58,17 @@ import com.rcmiku.music.data.favoriteSongIdsDatastore
 import com.rcmiku.music.extensions.playMediaAtId
 import com.rcmiku.music.extensions.setPlaylist
 import com.rcmiku.music.ui.components.GridThumbnailImage
+import com.rcmiku.music.ui.components.AlbumMenuBottomSheet
 import com.rcmiku.music.ui.components.NavigationTitle
 import com.rcmiku.music.ui.components.NewAlbumTimeline
 import com.rcmiku.music.ui.navigation.AlbumNav
+import com.rcmiku.music.ui.navigation.ArtistNav
 import com.rcmiku.music.ui.components.PlaylistGridItem
 import com.rcmiku.music.ui.components.SongListItem
 import com.rcmiku.music.ui.components.SongMenuBottomSheet
 import com.rcmiku.music.ui.components.TopBar
 import com.rcmiku.music.ui.navigation.PlaylistNav
+import com.rcmiku.music.utils.FeedAlbum
 import com.rcmiku.music.utils.rememberPreference
 import com.rcmiku.music.viewModel.HomeScreenViewModel
 import com.rcmiku.ncmapi.model.Song
@@ -85,6 +88,8 @@ fun HomeScreen(
     val newAlbums by homeScreenViewModel.newAlbums.collectAsState()
     val feedScanning by homeScreenViewModel.feedScanning.collectAsState()
     val feedLastScan by homeScreenViewModel.feedLastScan.collectAsState()
+    var selectFeedAlbum by remember { mutableStateOf<FeedAlbum?>(null) }
+    var openAlbumMenu by remember { mutableStateOf(false) }
     val recommendPlaylistState by homeScreenViewModel.recommendPlaylist.collectAsState()
     val personalizedPlaylistState by homeScreenViewModel.personalizedPlaylist.collectAsState()
     val mediaController = LocalPlayerController.current.controller
@@ -176,12 +181,24 @@ fun HomeScreen(
                     lastScanTime = feedLastScan,
                     onRescan = { homeScreenViewModel.rescanFeed() },
                     onAlbumClick = { navController.navigate(AlbumNav(albumId = it.id)) },
+                    onMoreClick = {
+                        selectFeedAlbum = it
+                        openAlbumMenu = true
+                    },
                     modifier = Modifier.weight(1f)
                 )
                 }
             }
         }
     }
+
+    AlbumMenuBottomSheet(
+        album = selectFeedAlbum,
+        openBottomSheet = openAlbumMenu,
+        onDismiss = { openAlbumMenu = false },
+        onViewArtist = { navController.navigate(ArtistNav(artistId = it.artistId)) },
+        onCollect = { homeScreenViewModel.collectFeedAlbum(it) }
+    )
 
     SongMenuBottomSheet(
         navController = navController,

@@ -28,6 +28,9 @@ class PlaylistScreenViewModel @Inject constructor(
     private val playlistId = savedStateHandle.get<Long>("playlistId")
     private val limit = savedStateHandle.get<Int>("limit")
     private val noCache = savedStateHandle.get<Boolean>("noCache") ?: false
+
+    /** True for the "liked music" page, which gets a search field. */
+    val isFavorites: Boolean = noCache
     private val _playlistDetail =
         MutableStateFlow<PlaylistDetailResponse?>(
             if (noCache) cachedFavoriteDetail?.takeIf { it.playlist.id == playlistId } else null
