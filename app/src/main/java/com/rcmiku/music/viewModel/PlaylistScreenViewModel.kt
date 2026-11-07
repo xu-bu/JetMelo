@@ -29,7 +29,9 @@ class PlaylistScreenViewModel @Inject constructor(
     private val limit = savedStateHandle.get<Int>("limit")
     private val noCache = savedStateHandle.get<Boolean>("noCache") ?: false
     private val _playlistDetail =
-        MutableStateFlow<PlaylistDetailResponse?>(null)
+        MutableStateFlow<PlaylistDetailResponse?>(
+            if (noCache) cachedFavoriteDetail?.takeIf { it.playlist.id == playlistId } else null
+        )
     val playlistDetail: StateFlow<PlaylistDetailResponse?> =
         _playlistDetail.asStateFlow()
 
@@ -60,9 +62,10 @@ class PlaylistScreenViewModel @Inject constructor(
             context.favoriteSongIdsDatastore.data.distinctUntilChanged().collectLatest {
                 playlistId?.let {
                     AccountApi.favoriteSongLikeChange().onSuccess {
-                        _playlistDetail.value = PlaylistApi.playlistV6Detail(
-                            id = playlistId,
-                        ).getOrNull()
+                        PlaylistApi.playlistV6Detail(id = playlistId).getOrNull()?.let {
+                            cachedFavoriteDetail = it
+                            _playlistDetail.value = it
+                        }
                     }
                 }
             }
@@ -87,4 +90,8 @@ class PlaylistScreenViewModel @Inject constructor(
         }
     }
 
+    companion object {
+        /** Last loaded favorites list, kept so the page can show it instantly while refreshing. */
+        private var cachedFavoriteDetail: PlaylistDetailResponse? = null
+    }
 }
