@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -133,6 +135,7 @@ fun Player(
     }
 
     val screenHeight = LocalConfiguration.current.screenHeightDp
+    val wide = LocalConfiguration.current.screenWidthDp >= 600 && LocalConfiguration.current.screenWidthDp > screenHeight * 0.9f
 
     Surface(
         modifier = modifier
@@ -165,209 +168,242 @@ fun Player(
                 }
             }
 
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .aspectRatio(1f)
-                    .clip(MaterialTheme.shapes.small)
-                    .clickable { onClick() }
-            ) {
-                AsyncImage(
-                    model = mediaMetadata.artworkUri,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = imageModifier
+            val cover: @Composable (Modifier) -> Unit = { sizeModifier ->
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = sizeModifier
                         .clip(MaterialTheme.shapes.small)
-                        .fillMaxWidth()
-                )
+                        .clickable { onClick() }
+                ) {
+                    AsyncImage(
+                        model = mediaMetadata.artworkUri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = imageModifier
+                            .clip(MaterialTheme.shapes.small)
+                            .fillMaxWidth()
+                    )
+                }
             }
 
-            Column(
-                modifier = Modifier
-                    .weight(6f)
-                    .fillMaxWidth(),
-                verticalArrangement = if (screenHeight.dp < 700.dp) Arrangement.spacedBy(0.dp) else Arrangement.spacedBy(
-                    24.dp
-                )
-            ) {
+            val controls: @Composable (Modifier) -> Unit = { sizeModifier ->
                 Column(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp),
+                    modifier = sizeModifier,
+                    verticalArrangement = if (screenHeight.dp < 700.dp) Arrangement.spacedBy(0.dp) else Arrangement.spacedBy(
+                        24.dp
+                    )
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 24.dp),
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            mediaMetadata.title?.let {
-                                Text(
-                                    text = it.toString(),
-                                    maxLines = 1,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier
-                                        .basicMarquee()
-                                        .clickable { openBottomSheet = true }
-                                )
-                            }
-                            mediaMetadata.artist?.let {
-                                Text(
-                                    text = it.toString(),
-                                    maxLines = 1,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier
-                                        .basicMarquee()
-                                        .clickable { openBottomSheet = true }
-                                )
-                            }
-                        }
-                        FilledIconButton(
-                            onClick = {
-                                mediaController?.sendCustomCommand(
-                                    MediaSessionConstants.CommandToggleLike,
-                                    Bundle.EMPTY
-                                )
-                            }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                if (songIds.contains(mediaId?.toLong())) FavoriteFill else Favorite,
-                                contentDescription = null
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                mediaMetadata.title?.let {
+                                    Text(
+                                        text = it.toString(),
+                                        maxLines = 1,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier
+                                            .basicMarquee()
+                                            .clickable { openBottomSheet = true }
+                                    )
+                                }
+                                mediaMetadata.artist?.let {
+                                    Text(
+                                        text = it.toString(),
+                                        maxLines = 1,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier
+                                            .basicMarquee()
+                                            .clickable { openBottomSheet = true }
+                                    )
+                                }
+                            }
+                            FilledIconButton(
+                                onClick = {
+                                    mediaController?.sendCustomCommand(
+                                        MediaSessionConstants.CommandToggleLike,
+                                        Bundle.EMPTY
+                                    )
+                                }
+                            ) {
+                                Icon(
+                                    if (songIds.contains(mediaId?.toLong())) FavoriteFill else Favorite,
+                                    contentDescription = null
+                                )
+                            }
+                            FilledIconButton(onClick = { openPlayerBottomSheet = true }) {
+                                Icon(imageVector = Icons.Outlined.MoreVert, contentDescription = null)
+                            }
                         }
-                        FilledIconButton(onClick = { openPlayerBottomSheet = true }) {
-                            Icon(imageVector = Icons.Outlined.MoreVert, contentDescription = null)
+
+                        if (screenHeight.dp > 700.dp)
+                            Spacer(Modifier.height(24.dp))
+
+                        val interactionSource = remember { MutableInteractionSource() }
+                        Slider(
+                            value = (sliderPosition ?: position).toFloat(),
+                            valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                            onValueChange = { sliderPosition = it.toLong() },
+                            onValueChangeFinished = {
+                                sliderPosition?.let {
+                                    mediaController?.seekTo(it)
+                                    onPositionUpdate(it)
+                                }
+                                sliderPosition = null
+                            },
+                            track = { sliderState ->
+                                SliderDefaults.Track(
+                                    sliderState = sliderState,
+                                    thumbTrackGapSize = 2.dp,
+                                    modifier = Modifier.height(4.dp)
+                                )
+                            },
+                            thumb = {
+                                SliderDefaults.Thumb(
+                                    interactionSource = interactionSource,
+                                    thumbSize = DpSize(4.dp, 20.dp)
+                                )
+                            }
+                        )
+
+                        Row {
+                            Text(
+                                text = makeTimeString(sliderPosition ?: position),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                text = makeTimeString(duration),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
 
                     if (screenHeight.dp > 700.dp)
                         Spacer(Modifier.height(24.dp))
 
-                    val interactionSource = remember { MutableInteractionSource() }
-                    Slider(
-                        value = (sliderPosition ?: position).toFloat(),
-                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
-                        onValueChange = { sliderPosition = it.toLong() },
-                        onValueChangeFinished = {
-                            sliderPosition?.let {
-                                mediaController?.seekTo(it)
-                                onPositionUpdate(it)
+                    val buttonSize = Modifier.size(48.dp)
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        modifier = Modifier
+                            .padding(horizontal = 24.dp)
+                            .fillMaxWidth()
+                    ) {
+                        FilledTonalIconButton(
+                            onClick = {
+                                mediaController?.sendCustomCommand(
+                                    MediaSessionConstants.CommandToggleShuffle,
+                                    Bundle.EMPTY
+                                )
                             }
-                            sliderPosition = null
-                        },
-                        track = { sliderState ->
-                            SliderDefaults.Track(
-                                sliderState = sliderState,
-                                thumbTrackGapSize = 2.dp,
-                                modifier = Modifier.height(4.dp)
-                            )
-                        },
-                        thumb = {
-                            SliderDefaults.Thumb(
-                                interactionSource = interactionSource,
-                                thumbSize = DpSize(4.dp, 20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Shuffle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.alpha(if (!shuffleMode) 0.4f else 1f)
                             )
                         }
-                    )
+                        FilledTonalIconButton(
+                            onClick = { mediaController?.seekToPrevious() },
+                            modifier = buttonSize
+                        ) {
+                            Icon(
+                                SkipPreviousFill,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        FilledTonalIconButton(
+                            modifier = Modifier.size(72.dp),
+                            onClick = { if (!isPlaying) mediaController?.play() else mediaController?.pause() }
+                        ) {
+                            Icon(
+                                if (isPlaying) PauseFill else Icons.Filled.PlayArrow,
+                                modifier = Modifier.size(48.dp),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        FilledTonalIconButton(
+                            onClick = { mediaController?.seekToNext() },
+                            modifier = buttonSize
+                        ) {
+                            Icon(
+                                SkipNextFill,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
 
-                    Row {
-                        Text(
-                            text = makeTimeString(sliderPosition ?: position),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = makeTimeString(duration),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        FilledTonalIconButton(
+                            onClick = {
+                                val newMode = when (repeatMode) {
+                                    0 -> 2
+                                    1 -> 0
+                                    2 -> 1
+                                    else -> 0
+                                }
+                                mediaController?.repeatMode = newMode
+                            }
+                        ) {
+                            Icon(
+                                imageVector = repeatIcon,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.alpha(if (repeatMode == 0) 0.4f else 1f)
+                            )
+                        }
                     }
                 }
+            }
 
-                if (screenHeight.dp > 700.dp)
-                    Spacer(Modifier.height(24.dp))
-
-                val buttonSize = Modifier.size(48.dp)
-
+            if (wide) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceAround,
                     modifier = Modifier
-                        .padding(horizontal = 24.dp)
+                        .weight(1f)
                         .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FilledTonalIconButton(
-                        onClick = {
-                            mediaController?.sendCustomCommand(
-                                MediaSessionConstants.CommandToggleShuffle,
-                                Bundle.EMPTY
-                            )
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Shuffle,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.alpha(if (!shuffleMode) 0.4f else 1f)
-                        )
-                    }
-                    FilledTonalIconButton(
-                        onClick = { mediaController?.seekToPrevious() },
-                        modifier = buttonSize
-                    ) {
-                        Icon(
-                            SkipPreviousFill,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    FilledTonalIconButton(
-                        modifier = Modifier.size(72.dp),
-                        onClick = { if (!isPlaying) mediaController?.play() else mediaController?.pause() }
-                    ) {
-                        Icon(
-                            if (isPlaying) PauseFill else Icons.Filled.PlayArrow,
-                            modifier = Modifier.size(48.dp),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    FilledTonalIconButton(
-                        onClick = { mediaController?.seekToNext() },
-                        modifier = buttonSize
-                    ) {
-                        Icon(
-                            SkipNextFill,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    FilledTonalIconButton(
-                        onClick = {
-                            val newMode = when (repeatMode) {
-                                0 -> 2
-                                1 -> 0
-                                2 -> 1
-                                else -> 0
-                            }
-                            mediaController?.repeatMode = newMode
-                        }
-                    ) {
-                        Icon(
-                            imageVector = repeatIcon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.alpha(if (repeatMode == 0) 0.4f else 1f)
-                        )
-                    }
+                    cover(
+                        Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(1f, matchHeightConstraintsFirst = true)
+                    )
+                    controls(
+                        Modifier
+                            .weight(1f)
+                            .wrapContentHeight()
+                    )
                 }
+            } else {
+                cover(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .aspectRatio(1f)
+                )
+                controls(
+                    Modifier
+                        .weight(6f)
+                        .fillMaxWidth()
+                )
             }
         }
 
