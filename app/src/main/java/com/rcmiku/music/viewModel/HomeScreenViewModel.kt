@@ -62,15 +62,11 @@ class HomeScreenViewModel @Inject constructor(@ApplicationContext private val co
 
     init {
         fetchRecommendSongs()
-        fetchRecommendPlaylist()
-        fetchPersonalizedPlaylist()
         fetchFavoriteSongIds()
     }
 
     fun refresh() {
         fetchRecommendSongs()
-        fetchRecommendPlaylist()
-        fetchPersonalizedPlaylist()
         fetchFavoriteSongIds()
     }
 

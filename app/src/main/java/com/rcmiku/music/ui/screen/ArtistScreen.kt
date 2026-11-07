@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -71,6 +73,7 @@ fun ArtistScreen(
 ) {
     val artistHeadInfoState by artistScreenViewModel.artistHeadInfo.collectAsState()
     val artistTopSongState by artistScreenViewModel.artistTopSong.collectAsState()
+    val artistDynamicState by artistScreenViewModel.artistDynamic.collectAsState()
     val artistAlbumList = artistScreenViewModel.artistAlbumList.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
     val showPlaylistTitle by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 } }
@@ -100,6 +103,33 @@ fun ArtistScreen(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.aspectRatio(4f / 3f)
                 )
+                artistDynamicState?.let { dynamic ->
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(6.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        val followDays = dynamic.followTime
+                            ?.takeIf { dynamic.followed && it > 0 }
+                            ?.let { ((System.currentTimeMillis() - it) / 86_400_000L).coerceAtLeast(0) }
+                        if (followDays != null) {
+                            Text(
+                                text = stringResource(R.string.followed_days, followDays),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier
+                                    .clip(MaterialTheme.shapes.small)
+                                    .background(color = MaterialTheme.colorScheme.primary)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                            Spacer(Modifier.height(4.dp))
+                        }
+                        FilledTonalButton(onClick = { artistScreenViewModel.toggleFollow() }) {
+                            Text(stringResource(if (dynamic.followed) R.string.following else R.string.follow))
+                        }
+                    }
+                }
                 artistHeadInfoState?.data?.artist?.name?.let {
                     Box(
                         Modifier

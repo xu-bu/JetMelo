@@ -8,6 +8,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.rcmiku.music.paging.ArtistAlbumPagingSource
 import com.rcmiku.ncmapi.api.artist.ArtistApi
+import com.rcmiku.ncmapi.model.ArtistDynamicResponse
 import com.rcmiku.ncmapi.model.ArtistHeadInfoResponse
 import com.rcmiku.ncmapi.model.ArtistTopSong
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +32,25 @@ class ArtistScreenViewModel @Inject constructor(savedStateHandle: SavedStateHand
     val artistTopSong: StateFlow<ArtistTopSong?> =
         _artistTopSong.asStateFlow()
 
+    private val _artistDynamic = MutableStateFlow<ArtistDynamicResponse?>(null)
+    val artistDynamic: StateFlow<ArtistDynamicResponse?> = _artistDynamic.asStateFlow()
+
+    private fun fetchArtistDynamic() {
+        viewModelScope.launch {
+            artistId?.let { _artistDynamic.value = ArtistApi.artistDynamic(it).getOrNull() }
+        }
+    }
+
+    fun toggleFollow() {
+        val id = artistId ?: return
+        val followed = _artistDynamic.value?.followed ?: return
+        viewModelScope.launch {
+            ArtistApi.artistSub(id, follow = !followed).onSuccess { fetchArtistDynamic() }
+        }
+    }
+
     init {
+        fetchArtistDynamic()
         viewModelScope.launch {
             artistId?.let {
                 _artistHeadInfo.value = ArtistApi.artistHeadInfo(it).getOrNull()

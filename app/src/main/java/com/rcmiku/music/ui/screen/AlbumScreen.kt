@@ -176,7 +176,7 @@ fun AlbumScreen(
                             OutlinedButton(
                                 onClick = {
                                     albumInfoState?.isSub?.let { isSub ->
-                                        albumScreenViewModel.albumSub(isSub = isSub)
+                                        albumScreenViewModel.albumSub(isSub = !isSub)
                                     }
                                 },
                                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,

@@ -128,144 +128,39 @@ fun HomeScreen(
                 }
             ) {
                 LazyColumn {
-                    item {
-                        recommendSongsState?.onSuccess {
+                    recommendSongsState?.onSuccess { response ->
+                        val songs = response.data.dailySongs
+                        item {
                             NavigationTitle(
                                 title = stringResource(R.string.recommend_songs),
                                 modifier = Modifier.animateItem()
                             )
-                            LazyHorizontalGrid(
-                                rows = GridCells.Fixed(4),
-                                state = gridState,
+                        }
+                        items(songs, key = { it.id }) { song ->
+                            SongListItem(
+                                isPlaying = isPlaying,
+                                isActive = currentMediaId == song.id,
+                                showLikedIcon = song.id in songIds,
+                                song = song,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(ListItemHeight * 4)
-                                    .animateItem(),
-                                flingBehavior = rememberSnapFlingBehavior(
-                                    gridState,
-                                    snapPosition = SnapPosition.Start
-                                )
-                            ) {
-                                itemsIndexed(it.data.dailySongs) { _, song ->
-                                    SongListItem(
-                                        isPlaying = isPlaying,
-                                        isActive = currentMediaId == song.id,
-                                        showLikedIcon = song.id in songIds,
-                                        song = song,
-                                        modifier = Modifier
-                                            .clip(MaterialTheme.shapes.small)
-                                            .width(340.dp)
-                                            .clickable {
-                                                mediaController?.setPlaylist(it.data.dailySongs)
-                                                mediaController?.playMediaAtId(song.id)
-                                            },
-                                        trailingContent = {
-                                            IconButton(onClick = {
-                                                selectSong = song
-                                                openBottomSheet = true
-                                            }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.MoreVert,
-                                                    contentDescription = stringResource(R.string.more)
-                                                )
-                                            }
-                                        }
-                                    )
+                                    .clip(MaterialTheme.shapes.small)
+                                    .clickable {
+                                        mediaController?.setPlaylist(songs)
+                                        mediaController?.playMediaAtId(song.id)
+                                    },
+                                trailingContent = {
+                                    IconButton(onClick = {
+                                        selectSong = song
+                                        openBottomSheet = true
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = stringResource(R.string.more)
+                                        )
+                                    }
                                 }
-                            }
-                        }
-                    }
-
-                    item {
-                        recommendPlaylistState?.onSuccess {
-                            NavigationTitle(
-                                title = stringResource(R.string.personalized_playlist),
-                                modifier = Modifier.animateItem()
                             )
-                            LazyRow {
-                                items(it.recommend) { playlist ->
-                                    PlaylistGridItem(
-                                        playlist = playlist,
-                                        modifier = Modifier
-                                            .clip(MaterialTheme.shapes.small)
-                                            .width(AlbumThumbnailSize)
-                                            .clickable(
-                                                onClick = {
-                                                    navController.navigate(PlaylistNav(playlistId = playlist.id))
-                                                }
-                                            ),
-                                        thumbnailContent = {
-                                            GridThumbnailImage(
-                                                url = playlist.picUrl,
-                                                modifier = Modifier
-                                                    .sharedElement(
-                                                        sharedTransitionScope.rememberSharedContentState(
-                                                            key = playlist.id
-                                                        ),
-                                                        animatedVisibilityScope = animatedContentScope,
-                                                        renderInOverlayDuringTransition = false,
-                                                        zIndexInOverlay = 10f
-                                                    )
-                                            )
-                                        }
-                                    )
-
-                                }
-                            }
-                        }
-                        personalizedPlaylistState?.onSuccess {
-                            NavigationTitle(
-                                title = stringResource(R.string.recommend_playlist),
-                                modifier = Modifier.animateItem()
-                            )
-                            LazyRow {
-                                items(it.result) { playlist ->
-
-                                    PlaylistGridItem(
-                                        playlist = playlist,
-                                        modifier = Modifier
-                                            .sharedBounds(
-                                                sharedContentState = rememberSharedContentState(
-                                                    key = playlist.name + playlist.id
-                                                ),
-                                                animatedVisibilityScope = animatedContentScope,
-                                                placeHolderSize = SharedTransitionScope.PlaceHolderSize.animatedSize,
-                                                boundsTransform = AlbumArtBoundsTransform,
-                                                enter = fadeIn(
-                                                    tweenEnter(delayMillis = DURATION_EXIT_SHORT)
-                                                ),
-                                                exit = fadeOut(
-                                                    tweenExit(durationMillis = DURATION_EXIT_SHORT)
-                                                )
-                                            )
-                                            .clip(MaterialTheme.shapes.small)
-                                            .width(AlbumThumbnailSize)
-                                            .clickable(
-                                                onClick = {
-                                                    navController.navigate(
-                                                        PlaylistNav(
-                                                            playlistId = playlist.id,
-                                                            limit = playlist.trackCount
-                                                        )
-                                                    )
-                                                }
-                                            ),
-                                        thumbnailContent = {
-                                            GridThumbnailImage(
-                                                url = playlist.picUrl,
-                                                modifier = Modifier
-                                                    .sharedElement(
-                                                        sharedTransitionScope.rememberSharedContentState(
-                                                            key = playlist.id
-                                                        ),
-                                                        animatedVisibilityScope = animatedContentScope
-                                                    )
-                                            )
-                                        }
-                                    )
-                                }
-
-                            }
                         }
                     }
                 }

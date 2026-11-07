@@ -264,7 +264,7 @@ fun Player(
                                         text = formatCommentCount(commentCount),
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier
                                             .align(Alignment.BottomEnd)
                                             .padding(end = 5.dp, bottom = 3.dp)

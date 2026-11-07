@@ -54,6 +54,8 @@ class SearchViewModel @Inject constructor(
             Pager(
                 config = PagingConfig(
                     pageSize = 100,
+                    // NetEase rejects limit > 100 (code 400); Paging's default first load is 3x pageSize.
+                    initialLoadSize = 100,
                     prefetchDistance = 50,
                     enablePlaceholders = false
                 ),

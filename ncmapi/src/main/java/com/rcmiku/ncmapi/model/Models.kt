@@ -236,6 +236,12 @@ data class ArtistUser(
 )
 
 @Serializable
+data class ArtistDynamicResponse(
+    val followed: Boolean = false,
+    val followTime: Long? = null
+)
+
+@Serializable
 data class ArtistTopSong(
     val songs: List<Song> = emptyList()
 )

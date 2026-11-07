@@ -117,7 +117,7 @@ fun RecordScreen(
                     }
                 }
             }
-            songRecord?.weekData?.let { data ->
+            (if (state == 0) songRecord?.weekData else songRecord?.allData)?.let { data ->
                 itemsIndexed(data) { index, item ->
                     SongListItem(
                         song = item.song,
