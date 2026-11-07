@@ -20,12 +20,18 @@ The workflow also sets `concurrency.cancel-in-progress` in `.github/workflows/bu
 
 ## Compile after every code change
 
-After writing or editing code, compile locally before reporting it as done. Use JDK 21. The user prefers the newest local JDK in general, but Gradle 8.11.1 / AGP 8.9.1 do not support Android Studio's JDK 25 (the build hung), so the user chose JDK 21 for this project. Do not switch JDKs without asking. Run in the foreground with a time limit, and do not use `-q` (so a hang is visible):
+After writing or editing code, compile locally before reporting it as done. Use the newest JDK installed locally (currently Android Studio's JDK 25) with Gradle 9.4.1 (the wrapper), run in the foreground or background with a time limit, and do not use `-q` (so a hang is visible):
 
 ```bash
-export JAVA_HOME="$HOME/.gradle/jdks/eclipse_adoptium-21-aarch64-os_x.2/jdk-21.0.7+6/Contents/Home"
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 export ANDROID_HOME="$HOME/Library/Android/sdk"
 sh ./gradlew :app:compileDebugKotlin --console=plain
+```
+
+At home the IPv6 route is dead, which makes Java downloads about 6x slower; add the flag below for that session only (do not put it in a global config, the user is sometimes in an office with IPv6):
+
+```bash
+sh ./gradlew :app:compileDebugKotlin --console=plain "-Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 -Djava.net.preferIPv4Stack=true"
 ```
 
 Fix every compile error before moving on. If the compile cannot run, say so and why instead of reporting the change as verified.
