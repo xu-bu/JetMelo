@@ -26,6 +26,13 @@ android {
 
     signingConfigs {
         register("release") {
+            // Provided by CI (GitHub secrets); absent locally, in which case release stays unsigned.
+            System.getenv("KEYSTORE_FILE")?.takeIf { it.isNotBlank() }?.let { path ->
+                storeFile = file(path)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
             enableV1Signing = true
             enableV2Signing = true
             enableV3Signing = true
