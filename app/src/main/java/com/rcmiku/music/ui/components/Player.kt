@@ -58,6 +58,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.media3.common.C
 import androidx.media3.common.MediaMetadata
 import androidx.navigation.NavHostController
@@ -84,6 +85,7 @@ import com.rcmiku.music.ui.navigation.AlbumNav
 import com.rcmiku.music.ui.navigation.ArtistNav
 import com.rcmiku.music.utils.getItemShape
 import com.rcmiku.music.utils.makeTimeString
+import com.rcmiku.ncmapi.api.comment.CommentApi
 import com.rcmiku.ncmapi.model.Artist
 import com.rcmiku.ncmapi.model.Song
 import com.rcmiku.ncmapi.model.SongAlbum
@@ -130,7 +132,15 @@ fun Player(
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
     var openPlayerBottomSheet by rememberSaveable { mutableStateOf(false) }
     var openCommentSheet by rememberSaveable { mutableStateOf(false) }
+    var commentCount by remember { mutableStateOf(0) }
     val shuffleMode = playerState?.shuffleModeEnabled == true
+
+    LaunchedEffect(mediaId) {
+        commentCount = 0
+        mediaId?.toLongOrNull()?.let { id ->
+            commentCount = CommentApi.songComments(id, limit = 1).getOrNull()?.total ?: 0
+        }
+    }
 
     LaunchedEffect(mediaId) {
         playerState?.currentMediaItem?.mediaMetadata?.extras?.getString("song")?.let {
@@ -139,7 +149,9 @@ fun Player(
     }
 
     val screenHeight = LocalConfiguration.current.screenHeightDp
-    val wide = LocalConfiguration.current.screenWidthDp >= 600 && LocalConfiguration.current.screenWidthDp > screenHeight * 0.9f
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val large = screenWidth >= 600
+    val sideBySide = large && screenWidth >= screenHeight
 
     Surface(
         modifier = modifier
@@ -243,8 +255,21 @@ fun Player(
                                     contentDescription = null
                                 )
                             }
-                            FilledIconButton(onClick = { openCommentSheet = true }) {
-                                Icon(imageVector = Comment, contentDescription = stringResource(R.string.comments))
+                            Box {
+                                FilledIconButton(onClick = { openCommentSheet = true }) {
+                                    Icon(imageVector = Comment, contentDescription = stringResource(R.string.comments))
+                                }
+                                if (commentCount > 0) {
+                                    Text(
+                                        text = formatCommentCount(commentCount),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier
+                                            .align(Alignment.BottomEnd)
+                                            .padding(end = 5.dp, bottom = 3.dp)
+                                    )
+                                }
                             }
                             FilledIconButton(onClick = { openPlayerBottomSheet = true }) {
                                 Icon(imageVector = Icons.Outlined.MoreVert, contentDescription = null)
@@ -379,7 +404,7 @@ fun Player(
                 }
             }
 
-            if (wide) {
+            if (sideBySide) {
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -399,6 +424,22 @@ fun Player(
                             .wrapContentHeight()
                     )
                 }
+            } else if (large) {
+                // Unfolded but taller than wide: the cover takes whatever height the controls leave.
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    cover(
+                        Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(1f, matchHeightConstraintsFirst = true)
+                    )
+                }
+                controls(Modifier.fillMaxWidth())
             } else {
                 cover(
                     Modifier
@@ -539,4 +580,11 @@ fun ArtistBottomSheet(
             }
         }
     }
+}
+
+/** <= 999 shows the exact number, up to 9999 shows "999+", 10k and above shows "1w+". */
+private fun formatCommentCount(count: Int): String = when {
+    count <= 999 -> count.toString()
+    count < 10_000 -> "999+"
+    else -> "1w+"
 }
