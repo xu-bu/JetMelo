@@ -2,6 +2,7 @@ package com.rcmiku.music.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -153,12 +154,21 @@ fun LibraryScreen(
                             )
                         }
 
-                        IconButton(onClick = {
-                            navController.navigate(Screen.FollowedArtists.route)
-                        }) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.small)
+                                .clickable { navController.navigate(Screen.FollowedArtists.route) }
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
-                                contentDescription = stringResource(R.string.followed_artists)
+                                contentDescription = null
+                            )
+                            Text(
+                                text = stringResource(R.string.followed_artists),
+                                fontSize = 11.sp,
+                                maxLines = 1
                             )
                         }
 

@@ -49,27 +49,32 @@ private const val PAGE_SIZE = 20
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommentBottomSheet(
-    songId: Long?,
+    resourceId: Long?,
     openBottomSheet: Boolean,
     onDismiss: () -> Unit,
+    isAlbum: Boolean = false,
 ) {
-    if (!openBottomSheet || songId == null) return
+    if (!openBottomSheet || resourceId == null) return
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    var hot by remember(songId) { mutableStateOf<List<Comment>>(emptyList()) }
-    var latest by remember(songId) { mutableStateOf<List<Comment>>(emptyList()) }
-    var total by remember(songId) { mutableStateOf(0) }
-    var hasMore by remember(songId) { mutableStateOf(true) }
-    var loading by remember(songId) { mutableStateOf(false) }
-    var failed by remember(songId) { mutableStateOf(false) }
+    var hot by remember(resourceId) { mutableStateOf<List<Comment>>(emptyList()) }
+    var latest by remember(resourceId) { mutableStateOf<List<Comment>>(emptyList()) }
+    var total by remember(resourceId) { mutableStateOf(0) }
+    var hasMore by remember(resourceId) { mutableStateOf(true) }
+    var loading by remember(resourceId) { mutableStateOf(false) }
+    var failed by remember(resourceId) { mutableStateOf(false) }
 
     fun loadMore() {
         if (loading || !hasMore) return
         loading = true
         failed = false
         scope.launch {
-            CommentApi.songComments(songId, PAGE_SIZE, latest.size)
+            val request = if (isAlbum)
+                CommentApi.albumComments(resourceId, PAGE_SIZE, latest.size)
+            else
+                CommentApi.songComments(resourceId, PAGE_SIZE, latest.size)
+            request
                 .onSuccess { response ->
                     if (latest.isEmpty()) hot = response.hotComments
                     latest = latest + response.comments
@@ -81,7 +86,7 @@ fun CommentBottomSheet(
         }
     }
 
-    LaunchedEffect(songId) { loadMore() }
+    LaunchedEffect(resourceId) { loadMore() }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -207,3 +212,10 @@ private fun CommentItem(comment: Comment) {
 
 private fun formatCommentTime(time: Long): String =
     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(time))
+
+/** <= 999 shows the exact number, up to 9999 shows "999+", 10k and above shows "1w+". */
+fun formatCommentCount(count: Int): String = when {
+    count <= 999 -> count.toString()
+    count < 10_000 -> "999+"
+    else -> "1w+"
+}

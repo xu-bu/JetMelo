@@ -255,22 +255,11 @@ fun Player(
                                     contentDescription = null
                                 )
                             }
-                            Box {
-                                FilledIconButton(onClick = { openCommentSheet = true }) {
-                                    Icon(imageVector = Comment, contentDescription = stringResource(R.string.comments))
-                                }
-                                if (commentCount > 0) {
-                                    Text(
-                                        text = formatCommentCount(commentCount),
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier
-                                            .align(Alignment.BottomEnd)
-                                            .padding(end = 5.dp, bottom = 3.dp)
-                                    )
-                                }
-                            }
+                            CommentButton(
+                                count = commentCount,
+                                filled = true,
+                                onClick = { openCommentSheet = true }
+                            )
                             FilledIconButton(onClick = { openPlayerBottomSheet = true }) {
                                 Icon(imageVector = Icons.Outlined.MoreVert, contentDescription = null)
                             }
@@ -473,7 +462,7 @@ fun Player(
         }
 
         CommentBottomSheet(
-            songId = mediaId?.toLongOrNull(),
+            resourceId = mediaId?.toLongOrNull(),
             openBottomSheet = openCommentSheet,
             onDismiss = { openCommentSheet = false }
         )
@@ -580,11 +569,4 @@ fun ArtistBottomSheet(
             }
         }
     }
-}
-
-/** <= 999 shows the exact number, up to 9999 shows "999+", 10k and above shows "1w+". */
-private fun formatCommentCount(count: Int): String = when {
-    count <= 999 -> count.toString()
-    count < 10_000 -> "999+"
-    else -> "1w+"
 }

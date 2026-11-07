@@ -109,7 +109,6 @@ fun SearchScreen(
     val tab = listOf(
         SearchType.Song to stringResource(R.string.song),
         SearchType.Playlist to stringResource(R.string.playlists),
-        SearchType.VoiceList to stringResource(R.string.voice_list),
         SearchType.Artist to stringResource(R.string.artist),
         SearchType.Album to stringResource(R.string.album)
     )

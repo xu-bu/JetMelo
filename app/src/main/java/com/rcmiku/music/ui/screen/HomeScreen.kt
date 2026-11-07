@@ -84,6 +84,7 @@ fun HomeScreen(
     val recommendSongsState by homeScreenViewModel.recommendSongs.collectAsState()
     val newAlbums by homeScreenViewModel.newAlbums.collectAsState()
     val feedScanning by homeScreenViewModel.feedScanning.collectAsState()
+    val feedLastScan by homeScreenViewModel.feedLastScan.collectAsState()
     val recommendPlaylistState by homeScreenViewModel.recommendPlaylist.collectAsState()
     val personalizedPlaylistState by homeScreenViewModel.personalizedPlaylist.collectAsState()
     val mediaController = LocalPlayerController.current.controller
@@ -172,6 +173,8 @@ fun HomeScreen(
                 NewAlbumTimeline(
                     albums = newAlbums,
                     scanning = feedScanning,
+                    lastScanTime = feedLastScan,
+                    onRescan = { homeScreenViewModel.rescanFeed() },
                     onAlbumClick = { navController.navigate(AlbumNav(albumId = it.id)) },
                     modifier = Modifier.weight(1f)
                 )

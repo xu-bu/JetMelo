@@ -5,6 +5,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -29,10 +30,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -48,8 +51,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
@@ -62,12 +67,16 @@ import com.rcmiku.music.extensions.playMediaAt
 import com.rcmiku.music.extensions.playMediaAtId
 import com.rcmiku.music.extensions.setPlaylist
 import com.rcmiku.music.ui.components.SongListItem
+import com.rcmiku.music.ui.components.CommentButton
+import com.rcmiku.music.ui.components.CommentBottomSheet
 import com.rcmiku.music.ui.components.SongMenuBottomSheet
 import com.rcmiku.music.ui.icons.LibraryAdd
 import com.rcmiku.music.ui.icons.LibraryAddCheck
+import com.rcmiku.music.ui.icons.Comment
 import com.rcmiku.music.ui.navigation.ArtistNav
 import com.rcmiku.music.utils.formatTimestamp
 import com.rcmiku.music.viewModel.AlbumScreenViewModel
+import com.rcmiku.ncmapi.api.comment.CommentApi
 import com.rcmiku.ncmapi.model.Song
 import kotlinx.coroutines.flow.map
 
@@ -88,6 +97,15 @@ fun AlbumScreen(
     val isPlaying = playerState?.isPlaying == true
     val currentMediaId = playerState?.currentMediaItem?.mediaId?.toLongOrNull()
     val albumInfoState by albumScreenViewModel.albumInfo.collectAsState()
+    var commentCount by remember { mutableStateOf(0) }
+    var openCommentSheet by rememberSaveable { mutableStateOf(false) }
+    val albumId = albumDetailState?.getOrNull()?.album?.id
+    LaunchedEffect(albumId) {
+        commentCount = 0
+        albumId?.let {
+            commentCount = CommentApi.albumComments(it, limit = 1).getOrNull()?.total ?: 0
+        }
+    }
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
     var selectSong by remember { mutableStateOf<Song?>(null) }
     val context = LocalContext.current
@@ -223,6 +241,11 @@ fun AlbumScreen(
                                     text = stringResource(R.string.play)
                                 )
                             }
+                            CommentButton(
+                                count = commentCount,
+                                filled = false,
+                                onClick = { openCommentSheet = true }
+                            )
                         }
                     }
                 }
@@ -252,6 +275,13 @@ fun AlbumScreen(
             }
         }
     }
+
+    CommentBottomSheet(
+        resourceId = albumId,
+        isAlbum = true,
+        openBottomSheet = openCommentSheet,
+        onDismiss = { openCommentSheet = false }
+    )
 
     SongMenuBottomSheet(
         navController = navController,

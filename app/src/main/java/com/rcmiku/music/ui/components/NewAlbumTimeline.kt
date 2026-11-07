@@ -17,6 +17,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,6 +48,8 @@ private const val MAX_ALBUMS = 20
 fun NewAlbumTimeline(
     albums: List<FeedAlbum>,
     scanning: Boolean,
+    lastScanTime: Long,
+    onRescan: () -> Unit,
     onAlbumClick: (FeedAlbum) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -56,7 +62,33 @@ fun NewAlbumTimeline(
 
     LazyColumn(modifier = modifier) {
         item {
-            NavigationTitle(title = stringResource(R.string.new_releases))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                NavigationTitle(
+                    title = stringResource(R.string.new_releases),
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onRescan, enabled = !scanning) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = stringResource(R.string.new_releases_rescan)
+                    )
+                }
+            }
+            Text(
+                text = if (lastScanTime > 0)
+                    stringResource(
+                        R.string.new_releases_last_scan,
+                        SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()).format(Date(lastScanTime))
+                    )
+                else
+                    stringResource(R.string.new_releases_never_scanned),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
         }
         if (scanning) {
             item {

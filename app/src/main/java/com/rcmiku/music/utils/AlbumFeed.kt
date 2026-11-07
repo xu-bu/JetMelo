@@ -64,12 +64,25 @@ object AlbumFeed {
             .map { prefs -> decode(prefs[newAlbumFeedKey]) }
             .distinctUntilChanged()
 
+    /** Time of the last fully successful scan in epoch millis, 0 if there has been none. */
+    fun lastScan(context: Context): Flow<Long> =
+        context.applicationContext.dataStore.data
+            .map { prefs -> prefs[newAlbumFeedLastScanKey] ?: 0L }
+            .distinctUntilChanged()
+
     /** Starts a scan in the background if the last successful one is more than 24 hours old. */
-    fun scanIfDue(context: Context) {
+    fun scanIfDue(context: Context) = startScan(context, force = false)
+
+    /** Starts a scan right now, regardless of the 24 hour limit. */
+    fun scanNow(context: Context) = startScan(context, force = true)
+
+    private fun startScan(context: Context, force: Boolean) {
         val appContext = context.applicationContext
         scope.launch {
-            val last = appContext.dataStore.data.first()[newAlbumFeedLastScanKey] ?: 0L
-            if (System.currentTimeMillis() - last < SCAN_INTERVAL_MS) return@launch
+            if (!force) {
+                val last = appContext.dataStore.data.first()[newAlbumFeedLastScanKey] ?: 0L
+                if (System.currentTimeMillis() - last < SCAN_INTERVAL_MS) return@launch
+            }
             if (!_scanning.compareAndSet(expect = false, update = true)) return@launch
             try {
                 scan(appContext)
@@ -150,7 +163,8 @@ object AlbumFeed {
         }
     }
 
-    private suspend fun loadCollectedAlbumIds(): Set<Long>? {
+    /** IDs of all albums the user has collected, or null if a request failed. */
+    suspend fun loadCollectedAlbumIds(): Set<Long>? {
         val ids = mutableSetOf<Long>()
         var offset = 0
         while (true) {

@@ -61,6 +61,7 @@ import com.rcmiku.music.ui.components.AlbumListItem
 import com.rcmiku.music.ui.components.NavigationTitle
 import com.rcmiku.music.ui.components.SongListItem
 import com.rcmiku.music.ui.components.SongMenuBottomSheet
+import com.rcmiku.music.ui.icons.LibraryAddCheck
 import com.rcmiku.music.ui.navigation.AlbumNav
 import com.rcmiku.music.viewModel.ArtistScreenViewModel
 import com.rcmiku.ncmapi.model.Song
@@ -74,6 +75,7 @@ fun ArtistScreen(
     val artistHeadInfoState by artistScreenViewModel.artistHeadInfo.collectAsState()
     val artistTopSongState by artistScreenViewModel.artistTopSong.collectAsState()
     val artistDynamicState by artistScreenViewModel.artistDynamic.collectAsState()
+    val collectedAlbumIds by artistScreenViewModel.collectedAlbumIds.collectAsState()
     val artistAlbumList = artistScreenViewModel.artistAlbumList.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
     val showPlaylistTitle by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 } }
@@ -231,9 +233,21 @@ fun ArtistScreen(
             2 -> {
                 items(artistAlbumList.itemCount) { index ->
                     artistAlbumList[index]?.let {
-                        AlbumListItem(album = it, modifier = Modifier.clickable {
-                            navController.navigate(AlbumNav(albumId = it.id))
-                        })
+                        AlbumListItem(
+                            album = it,
+                            modifier = Modifier.clickable {
+                                navController.navigate(AlbumNav(albumId = it.id))
+                            },
+                            trailingContent = {
+                                if (it.id in collectedAlbumIds)
+                                    Icon(
+                                        imageVector = LibraryAddCheck,
+                                        contentDescription = stringResource(R.string.library_add_check),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(end = 12.dp)
+                                    )
+                            }
+                        )
                     }
                 }
             }

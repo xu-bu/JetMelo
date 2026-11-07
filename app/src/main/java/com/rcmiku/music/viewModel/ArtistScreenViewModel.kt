@@ -7,6 +7,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.rcmiku.music.paging.ArtistAlbumPagingSource
+import com.rcmiku.music.utils.AlbumFeed
 import com.rcmiku.ncmapi.api.artist.ArtistApi
 import com.rcmiku.ncmapi.model.ArtistDynamicResponse
 import com.rcmiku.ncmapi.model.ArtistHeadInfoResponse
@@ -32,6 +33,9 @@ class ArtistScreenViewModel @Inject constructor(savedStateHandle: SavedStateHand
     val artistTopSong: StateFlow<ArtistTopSong?> =
         _artistTopSong.asStateFlow()
 
+    private val _collectedAlbumIds = MutableStateFlow<Set<Long>>(emptySet())
+    val collectedAlbumIds: StateFlow<Set<Long>> = _collectedAlbumIds.asStateFlow()
+
     private val _artistDynamic = MutableStateFlow<ArtistDynamicResponse?>(null)
     val artistDynamic: StateFlow<ArtistDynamicResponse?> = _artistDynamic.asStateFlow()
 
@@ -51,6 +55,9 @@ class ArtistScreenViewModel @Inject constructor(savedStateHandle: SavedStateHand
 
     init {
         fetchArtistDynamic()
+        viewModelScope.launch {
+            AlbumFeed.loadCollectedAlbumIds()?.let { _collectedAlbumIds.value = it }
+        }
         viewModelScope.launch {
             artistId?.let {
                 _artistHeadInfo.value = ArtistApi.artistHeadInfo(it).getOrNull()

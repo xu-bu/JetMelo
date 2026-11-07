@@ -41,6 +41,12 @@ class HomeScreenViewModel @Inject constructor(@ApplicationContext private val co
     val newAlbums: StateFlow<List<FeedAlbum>> = AlbumFeed.feed(context)
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val feedScanning: StateFlow<Boolean> = AlbumFeed.scanning
+    val feedLastScan: StateFlow<Long> = AlbumFeed.lastScan(context)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+
+    fun rescanFeed() {
+        AlbumFeed.scanNow(context)
+    }
 
     private fun fetchRecommendSongs() {
         viewModelScope.launch {
