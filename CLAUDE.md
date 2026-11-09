@@ -20,7 +20,7 @@ The workflow also sets `concurrency.cancel-in-progress` in `.github/workflows/bu
 
 ## Compile after every code change
 
-After writing or editing code, compile locally before reporting it as done. Use the newest JDK installed locally (currently Android Studio's JDK 25) with Gradle 9.4.1 (the wrapper), run in the foreground or background with a time limit, and do not use `-q` (so a hang is visible):
+After writing or editing code, compile locally before reporting it as done. Use the newest JDK installed locally (currently Android Studio's JDK 25; pinned to JDK 25 in `gradle/gradle-daemon-jvm.properties`) with Gradle 9.4.1 (the wrapper), run in the foreground or background with a time limit, and do not use `-q` (so a hang is visible):
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
