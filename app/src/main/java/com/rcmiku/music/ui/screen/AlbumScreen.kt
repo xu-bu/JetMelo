@@ -97,6 +97,7 @@ fun AlbumScreen(
     val isPlaying = playerState?.isPlaying == true
     val currentMediaId = playerState?.currentMediaItem?.mediaId?.toLongOrNull()
     val albumInfoState by albumScreenViewModel.albumInfo.collectAsState()
+    val listenedHereState by albumScreenViewModel.listenedHere.collectAsState()
     var commentCount by remember { mutableStateOf(0) }
     val albumId = albumDetailState?.getOrNull()?.album?.id
     LaunchedEffect(albumId) {
@@ -249,6 +250,23 @@ fun AlbumScreen(
                                     }
                                 }
                             )
+                        }
+                        if (albumScreenViewModel.listenedHereArtistId(it.album) != null) {
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = { albumScreenViewModel.listenedHere(it.album) },
+                                enabled = !listenedHereState.working && albumInfoState?.isSub != true,
+                                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = LibraryAddCheck,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                                )
+                                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                                Text(text = stringResource(R.string.listened_here))
+                            }
                         }
                     }
                 }

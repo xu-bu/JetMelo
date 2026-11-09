@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 
 @HiltViewModel
 class FollowedArtistsViewModel @Inject constructor() : ViewModel() {
@@ -25,8 +26,8 @@ class FollowedArtistsViewModel @Inject constructor() : ViewModel() {
         load()
     }
 
-    fun load() {
-        viewModelScope.launch {
+    fun load(): Job {
+        return viewModelScope.launch {
             _loading.value = true
             _failed.value = false
             val all = mutableListOf<SearchArtist>()

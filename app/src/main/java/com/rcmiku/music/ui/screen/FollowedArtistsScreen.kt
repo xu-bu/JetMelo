@@ -29,6 +29,7 @@ import com.rcmiku.music.R
 import com.rcmiku.music.ui.components.ArtistListItem
 import com.rcmiku.music.ui.navigation.ArtistNav
 import com.rcmiku.music.viewModel.FollowedArtistsViewModel
+import com.rcmiku.music.ui.components.RefreshBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +57,10 @@ fun FollowedArtistsScreen(
         }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
+            RefreshBox(
+                onRefresh = { viewModel.load().join() },
+                modifier = Modifier.fillMaxSize()
+            ) {
             LazyColumn(Modifier.fillMaxSize()) {
                 items(artists, key = { it.id }) { artist ->
                     ArtistListItem(
@@ -66,6 +71,7 @@ fun FollowedArtistsScreen(
                     )
                 }
             }
+}
             when {
                 failed -> TextButton(
                     onClick = { viewModel.load() },

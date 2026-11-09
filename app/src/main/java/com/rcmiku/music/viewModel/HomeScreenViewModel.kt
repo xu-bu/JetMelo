@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.Job
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(@ApplicationContext private val context: Context) :
@@ -64,10 +67,35 @@ class HomeScreenViewModel @Inject constructor(@ApplicationContext private val co
         AlbumFeed.scanNow(context)
     }
 
+    private var songsJob: Job? = null
+    private var songsLoadedAt = 0L
+
     private fun fetchRecommendSongs() {
-        viewModelScope.launch {
-            _recommendSongs.value = RecommendApi.recommendSongs()
+        songsJob = viewModelScope.launch {
+            val result = RecommendApi.recommendSongs()
+            _recommendSongs.value = result
+            if (result.isSuccess) songsLoadedAt = System.currentTimeMillis()
         }
+    }
+
+    /**
+     * Called whenever the app comes to the foreground. The daily list changes at 06:00 (China time),
+     * so reload when the loaded copy is older than the latest 06:00 or the last load failed.
+     */
+    fun refreshIfStale() {
+        if (songsJob?.isActive == true) return
+        if (songsLoadedAt < latestDailyUpdateMillis()) {
+            fetchRecommendSongs()
+            fetchFavoriteSongIds()
+        }
+    }
+
+    private fun latestDailyUpdateMillis(): Long {
+        val zone = ZoneId.of("Asia/Shanghai")
+        val now = ZonedDateTime.now(zone)
+        var boundary = now.toLocalDate().atTime(6, 0).atZone(zone)
+        if (boundary.isAfter(now)) boundary = boundary.minusDays(1)
+        return boundary.toInstant().toEpochMilli()
     }
 
     private fun fetchFavoriteSongIds() {

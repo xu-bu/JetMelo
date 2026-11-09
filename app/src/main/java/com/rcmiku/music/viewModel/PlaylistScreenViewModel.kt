@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 
 @HiltViewModel
 class PlaylistScreenViewModel @Inject constructor(
@@ -57,6 +58,18 @@ class PlaylistScreenViewModel @Inject constructor(
                     }
                     fetchPlaylistInfo()
                 }
+        }
+    }
+
+    fun refresh(): Job = viewModelScope.launch {
+        playlistId?.let { id ->
+            val detail = if (noCache) PlaylistApi.playlistV6Detail(id).getOrNull()
+            else limit?.let { PlaylistApi.playlistDetail(id = id, limit = it).getOrNull() }
+            detail?.let {
+                _playlistDetail.value = it
+                if (noCache) cachedFavoriteDetail = it
+            }
+            PlaylistApi.playlistInfo(id).getOrNull()?.let { _playlistInfo.value = it }
         }
     }
 

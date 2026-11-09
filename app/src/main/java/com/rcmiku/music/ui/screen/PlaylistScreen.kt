@@ -75,6 +75,9 @@ import com.rcmiku.music.utils.formatTimestamp
 import com.rcmiku.music.viewModel.PlaylistScreenViewModel
 import com.rcmiku.ncmapi.model.Song
 import kotlinx.coroutines.flow.map
+import com.rcmiku.music.ui.components.RefreshBox
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -136,8 +139,15 @@ fun PlaylistScreen(
                                 song.ar.any { artist -> artist.name.contains(query, ignoreCase = true) }
                     }
                 }
+                RefreshBox(
+                    onRefresh = { playlistScreenViewModel.refresh().join() },
+                    enabled = playlistScreenViewModel.isFavorites,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = padding.calculateTopPadding())
+                ) {
                 LazyColumn(
-                    contentPadding = padding, state = listState,
+                    contentPadding = PaddingValues(bottom = padding.calculateBottomPadding()), state = listState,
                 ) {
                     playlistTitle = it.playlist.name
                     item {
@@ -311,6 +321,7 @@ fun PlaylistScreen(
                         )
                     }
                 }
+}
             }
         }
     }

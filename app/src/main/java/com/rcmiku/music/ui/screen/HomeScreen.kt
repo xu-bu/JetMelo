@@ -75,6 +75,8 @@ import com.rcmiku.ncmapi.model.Song
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -105,6 +107,11 @@ fun HomeScreen(
     val songIds by context.favoriteSongIdsDatastore.data.map { it.songIdsList }
         .collectAsState(emptyList())
     val coroutineScope = rememberCoroutineScope()
+
+    // Reload the daily list when the app returns to the foreground on a new day.
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        homeScreenViewModel.refreshIfStale()
+    }
 
     val onRefresh: () -> Unit = {
         isRefreshing = true

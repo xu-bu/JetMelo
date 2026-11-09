@@ -85,6 +85,7 @@ import com.rcmiku.ncmapi.model.Song
 import com.rcmiku.ncmapi.model.toAlbumList
 import com.rcmiku.ncmapi.model.toPlaylist
 import com.rcmiku.ncmapi.model.toSearchArtist
+import com.rcmiku.music.ui.components.swipeToChangeTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -229,7 +230,12 @@ fun SearchScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.semantics { traversalIndex = 1f }
+                modifier = Modifier
+                    .semantics { traversalIndex = 1f }
+                    .swipeToChangeTab(state, tab.size) { index ->
+                        state = index
+                        searchViewModel.updateSearchType(tab[index].first)
+                    }
             ) {
 
                 when (searchType) {

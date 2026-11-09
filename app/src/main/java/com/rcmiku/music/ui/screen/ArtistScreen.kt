@@ -65,6 +65,7 @@ import com.rcmiku.music.ui.icons.LibraryAddCheck
 import com.rcmiku.music.ui.navigation.AlbumNav
 import com.rcmiku.music.viewModel.ArtistScreenViewModel
 import com.rcmiku.ncmapi.model.Song
+import com.rcmiku.music.ui.components.swipeToChangeTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +94,10 @@ fun ArtistScreen(
         stringResource(R.string.album)
     )
 
-    LazyColumn(state = listState) {
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.swipeToChangeTab(state, titles.size) { state = it }
+    ) {
         item {
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -235,6 +239,7 @@ fun ArtistScreen(
                     artistAlbumList[index]?.let {
                         AlbumListItem(
                             album = it,
+                            showPublishTime = true,
                             modifier = Modifier.clickable {
                                 navController.navigate(AlbumNav(albumId = it.id))
                             },

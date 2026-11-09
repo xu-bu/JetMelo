@@ -63,6 +63,9 @@ import com.rcmiku.ncmapi.model.SearchArtist
 import com.rcmiku.ncmapi.model.Song
 import com.rcmiku.ncmapi.model.SubAlbum
 import com.rcmiku.ncmapi.model.VoiceBaseInfo
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 const val ActiveBoxAlpha = 0.6f
 
@@ -246,13 +249,18 @@ fun ArtistListItem(
 fun AlbumListItem(
     album: Album,
     modifier: Modifier = Modifier,
+    showPublishTime: Boolean = false,
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) = ListItem(
     title = album.name,
     subtitle = stringResource(
         R.string.album_size,
         album.size
-    ) + " " + album.artists.joinToString("/") { it.name },
+    ) + " " + album.artists.joinToString("/") { it.name } +
+            if (showPublishTime && album.publishTime > 0)
+                "  ·  " + SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    .format(Date(album.publishTime))
+            else "",
     thumbnailContent = {
         AsyncImage(
             model = album.picUrl,

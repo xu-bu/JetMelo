@@ -8,6 +8,8 @@ import androidx.annotation.OptIn
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.media3.common.C
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.TrackSelectionParameters
@@ -144,7 +146,18 @@ class PlaybackService : MediaSessionService() {
                     }
                 }
                 setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
-            }.build()
+            }
+            // Let the system arbitrate audio focus: pause when another app starts playing sound.
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .build(),
+                /* handleAudioFocus = */ true
+            )
+            // Pause when headphones are unplugged or a Bluetooth output disconnects.
+            .setHandleAudioBecomingNoisy(true)
+            .build()
 
         val audioOffloadPreferences =
             TrackSelectionParameters.AudioOffloadPreferences.Builder()

@@ -29,6 +29,10 @@ import com.rcmiku.music.ui.components.AlbumListItem
 import com.rcmiku.music.ui.components.ListThumbnailImage
 import com.rcmiku.music.ui.navigation.AlbumNav
 import com.rcmiku.music.viewModel.AlbumSublistScreenViewmodel
+import com.rcmiku.music.ui.components.PagingRefreshBox
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -61,8 +65,14 @@ fun AlbumSublistScreen(
             },
         )
     }) { padding ->
+        PagingRefreshBox(
+            items = albumSublist,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = padding.calculateTopPadding())
+        ) {
         LazyColumn(
-            contentPadding = padding,
+            contentPadding = PaddingValues(bottom = padding.calculateBottomPadding()),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             items(albumSublist.itemCount) { index ->
@@ -91,5 +101,6 @@ fun AlbumSublistScreen(
                 Spacer(modifier = Modifier.navigationBarsPadding())
             }
         }
+}
     }
 }

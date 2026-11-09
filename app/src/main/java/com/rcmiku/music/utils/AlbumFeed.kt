@@ -102,6 +102,15 @@ object AlbumFeed {
         }
     }
 
+    /** Drops the stored feed entries of [artistId] released at or before [publishTime]. */
+    suspend fun removeArtistUpTo(context: Context, artistId: Long, publishTime: Long) {
+        context.applicationContext.dataStore.edit { prefs ->
+            val updated = decode(prefs[newAlbumFeedKey])
+                .filterNot { it.artistId == artistId && it.publishTime <= publishTime }
+            prefs[newAlbumFeedKey] = json.encodeToString(listSerializer, updated)
+        }
+    }
+
     /** Forget the feed, e.g. after logging out. */
     fun clear(context: Context) {
         val appContext = context.applicationContext

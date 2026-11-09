@@ -62,6 +62,7 @@ import com.rcmiku.music.ui.components.SongListItem
 import com.rcmiku.music.viewModel.RecordScreenViewModel
 import com.rcmiku.ncmapi.api.account.SongRecordType
 import kotlinx.coroutines.launch
+import com.rcmiku.music.ui.components.swipeToChangeTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,7 +102,10 @@ fun RecordScreen(
             )
         },
     ) { padding ->
-        LazyColumn(contentPadding = padding) {
+        LazyColumn(
+            contentPadding = padding,
+            modifier = Modifier.swipeToChangeTab(state, titles.size) { state = it }
+        ) {
             item {
                 Column {
                     SecondaryTabRow(
