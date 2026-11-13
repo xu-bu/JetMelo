@@ -76,7 +76,7 @@ private fun route(path: String, p: Map<String, Any>): Route {
         "/recommend/songs" -> eapi("/api/v3/discovery/recommend/songs")
         "/search/suggest" -> weapi("/api/search/suggest/web", mapOf("s" to required("keywords")))
         "/song/like" -> eapi("/api/song/like", mapOf("trackId" to required("id"), "userid" to required("uid"), "like" to required("like")))
-        "/song/url/v1" -> eapi("/api/song/enhance/player/url/v1", mapOf("ids" to "[${required("id")}]", "level" to (p["level"] ?: "standard"), "encodeType" to "flac"))
+        "/song/url/v1" -> eapi("/api/song/enhance/player/url/v1", mapOf("ids" to "[${required("id")}]", "level" to (p["level"] ?: "standard"), "encodeType" to "flac", "trialMode" to "35"))
         "/toplist" -> eapi("/api/toplist")
         "/user/account" -> weapi("/api/nuser/account/get")
         "/user/cloud" -> weapi("/api/v1/cloud/get", mapOf("limit" to (p["limit"] ?: 30), "offset" to (p["offset"] ?: 0)))

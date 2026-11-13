@@ -81,6 +81,13 @@ fun List<Radio>.toRadioMediaItemList() =
     }
 
 suspend fun updateMediaItemUri(songId: String, songLevel: SongLevel): Uri? {
-    return PlayerApi.songPlayUrlV1(songId, songLevel = songLevel)
-        .getOrNull()?.data?.firstOrNull()?.url?.toUri()
+    val result = PlayerApi.songPlayUrlV1(songId, songLevel = songLevel)
+    val song = result.getOrNull()?.data?.firstOrNull()
+    android.util.Log.d(
+        "SongUrl",
+        "id=$songId level=${songLevel.value} err=${result.exceptionOrNull()} " +
+            "fee=${song?.fee} gotLevel=${song?.level} br=${song?.br} time=${song?.time} " +
+            "trial=${song?.freeTrialInfo} url=${song?.url}"
+    )
+    return song?.url?.toUri()
 }
