@@ -72,7 +72,8 @@ private fun route(path: String, p: Map<String, Any>): Route {
             val tracks = apiJson.encodeToString(JsonArray.serializer(), JsonArray(ids.map { buildJsonObject { put("type", JsonPrimitive(3)); put("id", JsonPrimitive(it)) } }))
             weapi("/api/playlist/track/${if (path.endsWith("add")) "add" else "delete"}", mapOf("id" to (p["pid"] ?: p["id"] ?: error("Missing playlist ID")), "tracks" to tracks))
         }
-        "/recommend/songs" -> weapi("/api/v3/discovery/recommend/songs")
+        // Daily recommendations: the app endpoint (eapi on interface.music.163.com), not the web weapi one.
+        "/recommend/songs" -> eapi("/api/v3/discovery/recommend/songs")
         "/search/suggest" -> weapi("/api/search/suggest/web", mapOf("s" to required("keywords")))
         "/song/like" -> eapi("/api/song/like", mapOf("trackId" to required("id"), "userid" to required("uid"), "like" to required("like")))
         "/song/url/v1" -> eapi("/api/song/enhance/player/url/v1", mapOf("ids" to "[${required("id")}]", "level" to (p["level"] ?: "standard"), "encodeType" to "flac"))
