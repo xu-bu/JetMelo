@@ -80,14 +80,25 @@ fun List<Radio>.toRadioMediaItemList() =
             .build()
     }
 
+private const val URL_FETCH_ATTEMPTS = 3
+private const val URL_FETCH_RETRY_DELAY_MS = 400L
+
+/**
+ * Resolves the play URL of a song. A transient failure (network hiccup, rate limit, empty reply)
+ * would otherwise stop the player on the next track, so retry a few times before giving up.
+ */
 suspend fun updateMediaItemUri(songId: String, songLevel: SongLevel): Uri? {
-    val result = PlayerApi.songPlayUrlV1(songId, songLevel = songLevel)
-    val song = result.getOrNull()?.data?.firstOrNull()
-    android.util.Log.d(
-        "SongUrl",
-        "id=$songId level=${songLevel.value} err=${result.exceptionOrNull()} " +
-            "fee=${song?.fee} gotLevel=${song?.level} br=${song?.br} time=${song?.time} " +
-            "trial=${song?.freeTrialInfo} url=${song?.url}"
-    )
-    return song?.url?.toUri()
+    repeat(URL_FETCH_ATTEMPTS) { attempt ->
+        val result = PlayerApi.songPlayUrlV1(songId, songLevel = songLevel)
+        val song = result.getOrNull()?.data?.firstOrNull()
+        android.util.Log.d(
+            "SongUrl",
+            "id=$songId attempt=${attempt + 1} level=${songLevel.value} err=${result.exceptionOrNull()} " +
+                "fee=${song?.fee} gotLevel=${song?.level} br=${song?.br} time=${song?.time} " +
+                "trial=${song?.freeTrialInfo} url=${song?.url}"
+        )
+        song?.url?.takeIf { it.isNotBlank() }?.let { return it.toUri() }
+        if (attempt < URL_FETCH_ATTEMPTS - 1) kotlinx.coroutines.delay(URL_FETCH_RETRY_DELAY_MS)
+    }
+    return null
 }

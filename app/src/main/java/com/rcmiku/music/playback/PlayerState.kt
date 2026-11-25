@@ -262,10 +262,12 @@ internal class PlayerStateImpl(
             playWhenReady: Boolean,
             @Player.PlayWhenReadyChangeReason reason: Int
         ) {
+            android.util.Log.d("PlayDiag", "playWhenReady=$playWhenReady reason=$reason state=${player.playbackState} pos=${player.currentPosition}")
             this@PlayerStateImpl.playWhenReady = playWhenReady
         }
 
         override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
+            android.util.Log.d("PlayDiag", "suppression=$playbackSuppressionReason")
             this@PlayerStateImpl.playbackSuppressionReason = playbackSuppressionReason
         }
 
@@ -335,6 +337,7 @@ internal class PlayerStateImpl(
         }
 
         override fun onPlayerError(error: PlaybackException) {
+            android.util.Log.e("PlayDiag", "player error code=${error.errorCodeName}", error)
             if (context.dataStore.get(autoSkipNextOnErrorKey, false) &&
                 player.hasNextMediaItem()
             ) {
