@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
@@ -78,6 +81,7 @@ fun ArtistScreen(
     val artistDynamicState by artistScreenViewModel.artistDynamic.collectAsState()
     val collectedAlbumIds by artistScreenViewModel.collectedAlbumIds.collectAsState()
     val artistAlbumList = artistScreenViewModel.artistAlbumList.collectAsLazyPagingItems()
+    val albumsOldestFirst by artistScreenViewModel.albumsOldestFirst.collectAsState()
     val listState = rememberLazyListState()
     val showPlaylistTitle by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 } }
     var state by rememberSaveable { mutableIntStateOf(1) }
@@ -235,6 +239,23 @@ fun ArtistScreen(
             }
 
             2 -> {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = { artistScreenViewModel.toggleAlbumOrder() }) {
+                            Text(
+                                stringResource(
+                                    if (albumsOldestFirst) R.string.sort_oldest_first
+                                    else R.string.sort_newest_first
+                                )
+                            )
+                        }
+                    }
+                }
                 items(artistAlbumList.itemCount) { index ->
                     artistAlbumList[index]?.let {
                         AlbumListItem(

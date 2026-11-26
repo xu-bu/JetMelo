@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
 import com.rcmiku.music.paging.ArtistAlbumPagingSource
 import com.rcmiku.music.utils.AlbumFeed
 import com.rcmiku.ncmapi.api.artist.ArtistApi
@@ -66,15 +68,25 @@ class ArtistScreenViewModel @Inject constructor(savedStateHandle: SavedStateHand
         }
     }
 
+    private val _albumsOldestFirst = MutableStateFlow(false)
+    val albumsOldestFirst: StateFlow<Boolean> = _albumsOldestFirst.asStateFlow()
+
+    fun toggleAlbumOrder() {
+        _albumsOldestFirst.value = !_albumsOldestFirst.value
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val artistAlbumList = artistId?.let { id ->
-        Pager(
-            config = PagingConfig(
-                pageSize = 100,
-                prefetchDistance = 50,
-                enablePlaceholders = false
-            ),
-            pagingSourceFactory = { ArtistAlbumPagingSource(id) }
-        ).flow.cachedIn(viewModelScope)
+        _albumsOldestFirst.flatMapLatest { oldestFirst ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = 100,
+                    prefetchDistance = 50,
+                    enablePlaceholders = false
+                ),
+                pagingSourceFactory = { ArtistAlbumPagingSource(id, oldestFirst) }
+            ).flow
+        }.cachedIn(viewModelScope)
     } ?: flowOf()
 
 }

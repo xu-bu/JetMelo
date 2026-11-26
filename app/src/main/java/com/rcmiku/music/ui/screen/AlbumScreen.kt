@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
+import com.rcmiku.music.ui.components.FullScreenCover
 import com.rcmiku.music.LocalPlayerController
 import com.rcmiku.music.LocalPlayerState
 import com.rcmiku.music.R
@@ -107,6 +108,7 @@ fun AlbumScreen(
         }
     }
     var openBottomSheet by rememberSaveable { mutableStateOf(false) }
+    var showFullCover by rememberSaveable { mutableStateOf(false) }
     var selectSong by remember { mutableStateOf<Song?>(null) }
     val context = LocalContext.current
     val songIds by context.favoriteSongIdsDatastore.data.map { it.songIdsList }
@@ -158,7 +160,15 @@ fun AlbumScreen(
                                     )
                                     .size(200.dp)
                                     .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                                    .clickable { showFullCover = true }
                             )
+                            if (showFullCover) {
+                                FullScreenCover(
+                                    model = it.album.picUrl,
+                                    contentDescription = it.album.name,
+                                    onDismiss = { showFullCover = false }
+                                )
+                            }
                         }
                         Spacer(Modifier.height(12.dp))
                         Text(
