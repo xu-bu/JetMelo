@@ -1,5 +1,6 @@
 package com.rcmiku.music.ui.screen
 
+import com.rcmiku.music.ui.components.UpdateDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -103,6 +104,8 @@ fun MainScreen() {
             AlbumFeed.clear(appContext)
         }
     }
+
+    UpdateDialog()
 
     Scaffold(
         bottomBar = {

@@ -22,9 +22,11 @@ pagingCompose = "3.3.6"
 reorderable = "2.4.3"
 protobufKotlinLite = "4.29.1"
 protobuf = "0.10.1"
+kmpAppUpdater = "0.1.0"
 
 
 [libraries]
+kmp-app-updater-core = { module = "com.pavi2410.kmp-app-updater:core", version.ref = "kmpAppUpdater" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIconsCore" }

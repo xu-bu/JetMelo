@@ -18,8 +18,11 @@ android {
         applicationId = "com.rcmiku.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // CI passes the workflow run number (the same number as the "build-N" release tag),
+        // so the in-app update check can compare the installed build with the latest release.
+        val buildNumber = System.getenv("BUILD_NUMBER")?.toIntOrNull() ?: 0
+        versionCode = maxOf(buildNumber, 1)
+        versionName = "1.0.$buildNumber"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -139,6 +142,7 @@ dependencies {
     implementation(libs.androidx.paging.compose)
     implementation(libs.kotlinx.datetime)
     implementation(libs.reorderable)
+    implementation(libs.kmp.app.updater.core)
     implementation(project(":ncmapi"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
