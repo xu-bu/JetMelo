@@ -22,3 +22,6 @@
 
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 -dontwarn org.slf4j.**
+
+# Room database implementations are created reflectively through their no-arg constructor.
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
